@@ -27,6 +27,7 @@
 | `scripts/network/` | LanDiscovery, SyncHost, SyncClient, PetTransferManager |
 | `scripts/ui/` | Scene controllers (MainDesktop, MainMobile, ShopScene, etc.) |
 | `scenes/` | `.tscn` files mirroring script domains |
+| `scenes/transfer/` | `pet_send.tscn`, `pet_receive.tscn`, `pet_return.tscn`, `pet_receive_desktop.tscn` |
 | `data/` | Game balance/config JSON (items, balance, milestones) |
 
 ### Key autoload load order dependency
@@ -54,6 +55,15 @@ Scripts reference each other via `/root/<AutoloadName>`. If adding a new autoloa
 - **Button handlers** — buttons in `.tscn` without `Pressed` connections in code do nothing; always wire them in `_Ready()`
 - **Signal flow** — `IdleIncomeManager` must use `ResourceManager.AddCoins()` (not `GameManager.AddStarCoins()` directly) so `OnStarCoinsChanged` fires and UI updates
 - **Tracker initialization** — `SleepModeScene` and `WalkModeScene` must fetch their trackers from `/root/` and connect signals before calling `StartSleep()`/`StartWalk()`
+
+## Known Gotchas
+- **`SyncHost.SendData()` and `SyncClient.SendData()` are async** (`Task.Run`) — never call `StopTransfer()`/`Disconnect()` before receiving confirmation from the other side, or the message may not be sent completely. The pet transfer handshake uses 4 messages (`MOBILE_READY`/`PC_READY` + `TRANSFER_CONFIRM`) to guarantee synchronization. See [[Mecanicas/Transferencia de Pet]] for the full handshake flow.
+- **Pet transfer PC → Mobile**: PC must wait for `MOBILE_READY` from mobile before sending `SEND_PET`. Mobile must wait for `TRANSFER_CONFIRM` from PC before disconnecting. If either side disconnects early, the other side never receives confirmation and the pet appears on both devices.
+- **Pet transfer Mobile → PC**: Mobile acts as host (broadcast), PC connects as client. PC sends `PAIR_REQUEST` → mobile responds `PAIR_ACK` → PC sends `PC_READY` → mobile sends `SEND_PET` → PC responds `PET_ACK` → mobile sends `TRANSFER_CONFIRM`. Same 4-way handshake, just inverted roles.
+- **`PetLocationManager.CompleteTransfer()` emits `OnPetSent`** — UI scenes should connect to `PetTransferManager.OnTransferCompleted` instead, which fires after the save is written.
+- **Bidirectional transfer**: `PetTransferManager` supports both directions via `_isMobileSending` flag. When mobile sends, `PetLocation="pc"` in snapshot; when PC sends, `PetLocation="mobile"`. `CompleteTransfer()` uses this flag to set correct location.
+- **Transfer methods**: `StartSendingAsHost()` (PC→Mobile), `StartReceivingAsClient()` (Mobile←PC), `StartSendingAsMobileHost()` (Mobile→PC), `StartReceivingFromMobile()` (PC←Mobile). Each pair uses inverted host/client roles.
+- **UI buttons**: `MainDesktop` has `SendPetButton` (visible when pet at PC) and `ReceivePetButton` (visible when pet at mobile). `MainMobile` has `ReturnButton` (sends pet back to PC) and `ReceivePetButton` (receives pet from PC).
 
 ## Session Documentation (Mandatory)
 

@@ -9,10 +9,11 @@ private Label _coinsLabel;
 private Label _coinsPerMinLabel;
 private Label _sessionCoinsLabel;
 private Label _statusLabel;
-private Button _shopButton;
-private Button _inventoryButton;
-private Button _historyButton;
-private Button _sendPetButton;
+    private Button _shopButton;
+    private Button _inventoryButton;
+    private Button _historyButton;
+    private Button _sendPetButton;
+    private Button _receivePetButton;
 public override void _Ready()
 {
 _hungerLabel = GetNode<Label>("HUD/Attributes/HungerLabel");
@@ -22,21 +23,27 @@ _coinsLabel = GetNode<Label>("HUD/TopBar/CoinsLabel");
 _coinsPerMinLabel = GetNode<Label>("HUD/TopBar/CoinsPerMinLabel");
 _sessionCoinsLabel = GetNode<Label>("HUD/TopBar/SessionCoinsLabel");
 _statusLabel = GetNode<Label>("HUD/StatusLabel");
-_shopButton = GetNode<Button>("HUD/BottomBar/ShopButton");
-_inventoryButton = GetNode<Button>("HUD/BottomBar/InventoryButton");
-_historyButton = GetNode<Button>("HUD/BottomBar/HistoryButton");
-_sendPetButton = GetNode<Button>("HUD/BottomBar/SendPetButton");
-_shopButton.Pressed += OnShopPressed;
-_inventoryButton.Pressed += OnInventoryPressed;
-_historyButton.Pressed += OnHistoryPressed;
-_sendPetButton.Pressed += OnSendPetPressed;
-var petLocationManager = GetNode<PetLocationManager>("/root/PetLocationManager");
-if (petLocationManager.CurrentLocation == PetLocation.Mobile)
-{
-ShowPetAwayState();
-return;
-}
-InitializeHUD();
+    _shopButton = GetNode<Button>("HUD/BottomBar/ShopButton");
+    _inventoryButton = GetNode<Button>("HUD/BottomBar/InventoryButton");
+    _historyButton = GetNode<Button>("HUD/BottomBar/HistoryButton");
+    _sendPetButton = GetNode<Button>("HUD/BottomBar/SendPetButton");
+    _receivePetButton = GetNode<Button>("HUD/BottomBar/ReceivePetButton");
+    _shopButton.Pressed += OnShopPressed;
+    _inventoryButton.Pressed += OnInventoryPressed;
+    _historyButton.Pressed += OnHistoryPressed;
+    _sendPetButton.Pressed += OnSendPetPressed;
+    _receivePetButton.Pressed += OnReceivePetPressed;
+    var petLocationManager = GetNode<PetLocationManager>("/root/PetLocationManager");
+    if (petLocationManager.CurrentLocation == PetLocation.Mobile)
+    {
+        ShowPetAwayState();
+        _sendPetButton.Visible = false;
+        _receivePetButton.Visible = true;
+        return;
+    }
+    _sendPetButton.Visible = true;
+    _receivePetButton.Visible = false;
+    InitializeHUD();
 }
 private void OnShopPressed()
 {
@@ -50,10 +57,14 @@ private void OnHistoryPressed()
 {
 GetTree().ChangeSceneToFile("res://scenes/ui/history.tscn");
 }
-private void OnSendPetPressed()
-{
-GetTree().ChangeSceneToFile("res://scenes/transfer/pet_send.tscn");
-}
+    private void OnSendPetPressed()
+    {
+        GetTree().ChangeSceneToFile("res://scenes/transfer/pet_send.tscn");
+    }
+    private void OnReceivePetPressed()
+    {
+        GetTree().ChangeSceneToFile("res://scenes/transfer/pet_receive_desktop.tscn");
+    }
 private void InitializeHUD()
 {
 var petNeeds = GetNode<PetNeeds>("/root/PetNeeds");

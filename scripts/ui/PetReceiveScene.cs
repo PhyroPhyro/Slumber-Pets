@@ -7,6 +7,8 @@ public partial class PetReceiveScene : Control
     private PetTransferManager _transferManager;
     private LanDiscovery _lanDiscovery;
     private bool _isConnecting = false;
+    private Timer _searchTimeoutTimer;
+    private const float SearchTimeoutSeconds = 30.0f;
 
     public override void _Ready()
     {
@@ -24,7 +26,14 @@ public partial class PetReceiveScene : Control
         _lanDiscovery.OnHostDiscovered += OnHostDiscovered;
         _lanDiscovery.StartListening();
 
-        GD.Print("[PetReceiveScene] Listening for PC hosts...");
+        _searchTimeoutTimer = new Timer();
+        _searchTimeoutTimer.WaitTime = SearchTimeoutSeconds;
+        _searchTimeoutTimer.OneShot = true;
+        _searchTimeoutTimer.Timeout += OnSearchTimeout;
+        AddChild(_searchTimeoutTimer);
+        _searchTimeoutTimer.Start();
+
+        GD.Print("[PetReceiveScene] Listening for PC hosts... (timeout: ", SearchTimeoutSeconds, "s)");
     }
 
     private void OnHostDiscovered(string ip, int port, string pin, string petLocation)
@@ -34,7 +43,8 @@ public partial class PetReceiveScene : Control
         if (petLocation == "pc")
         {
             _isConnecting = true;
-            _statusLabel.Text = $"PC encontrado! Solicitando pet...";
+            _searchTimeoutTimer.Stop();
+            _statusLabel.Text = "PC encontrado! Solicitando pet...";
             GD.Print("[PetReceiveScene] PC found: ", ip, ":", port, " - Requesting pet transfer");
             _transferManager.StartReceivingAsClient(ip, port);
         }
@@ -62,13 +72,26 @@ public partial class PetReceiveScene : Control
     {
         _statusLabel.Text = "Falha na transferência: " + reason;
         _transferManager.StopTransfer();
+        _lanDiscovery.StopListening();
         _isConnecting = false;
+    }
+
+    private void OnSearchTimeout()
+    {
+        if (!_isConnecting)
+        {
+            _statusLabel.Text = "Tempo esgotado - PC não encontrado. Verifique se ambos estão na mesma rede.";
+            GD.PrintErr("[PetReceiveScene] Search timeout - no PC found");
+            _transferManager.StopTransfer();
+            _lanDiscovery.StopListening();
+        }
     }
 
     private void OnCancelPressed()
     {
         _transferManager.StopTransfer();
         _lanDiscovery.StopListening();
+        _searchTimeoutTimer.Stop();
         GetTree().ChangeSceneToFile("res://scenes/main_mobile.tscn");
     }
 }
