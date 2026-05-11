@@ -1,0 +1,53 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/WalkModeScene.cs" id="1_walk"]
+
+[node name="WalkModeScene" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_walk")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.1, 0.2, 0.1, 1)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 4
+
+[node name="TitleLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Modo Passeio"
+horizontal_alignment = 1
+
+[node name="StepsLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Passos: 0"
+horizontal_alignment = 1
+
+[node name="MilestonesLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Marcos: 0"
+horizontal_alignment = 1
+
+[node name="ItemFoundLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EndWalkButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Encerrar Passeio"
+alignment = 4

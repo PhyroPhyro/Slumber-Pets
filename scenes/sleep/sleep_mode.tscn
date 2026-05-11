@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3 uid="uid://p6nc7w55dr56"]
+
+[ext_resource type="Script" uid="uid://cmgp2thdwh6d6" path="res://scripts/ui/SleepModeScene.cs" id="1_sleep"]
+
+[node name="SleepModeScene" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sleep")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.02, 0.08, 1)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Modo Sono"
+horizontal_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Durma bem..."
+horizontal_alignment = 1
+
+[node name="TimerLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "00:00:00"
+horizontal_alignment = 1
+
+[node name="MovementLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Movimentos: 0"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="WakeButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Acordei"
+alignment = 4

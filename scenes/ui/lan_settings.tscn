@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://vuruto3rj0yc"]
+
+[node name="LanSettings" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.2, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBox"]
+layout_mode = 2
+text = "Configurações LAN"
+horizontal_alignment = 1
+
+[node name="PinLabel" type="Label" parent="MarginContainer/VBox"]
+layout_mode = 2
+text = "PIN: 1234"
+
+[node name="StatusLabel" type="Label" parent="MarginContainer/VBox"]
+layout_mode = 2
+text = "Status: Desconectado"
+
+[node name="ResetButton" type="Button" parent="MarginContainer/VBox"]
+layout_mode = 2
+text = "Reset"
+
+[node name="BackButton" type="Button" parent="MarginContainer/VBox"]
+layout_mode = 2
+text = "Voltar"

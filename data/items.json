@@ -1,0 +1,67 @@
+{
+  "items": [
+    {
+      "id": "food_basic",
+      "name": "Comida Básica",
+      "rarity": "common",
+      "type": "food",
+      "hungerRestore": 20,
+      "happinessRestore": 0,
+      "shopPrice": 10
+    },
+    {
+      "id": "food_medium",
+      "name": "Comida Média",
+      "rarity": "common+",
+      "type": "food",
+      "hungerRestore": 35,
+      "happinessRestore": 5,
+      "shopPrice": 30
+    },
+    {
+      "id": "food_special",
+      "name": "Comida Especial",
+      "rarity": "uncommon",
+      "type": "food",
+      "hungerRestore": 50,
+      "happinessRestore": 15,
+      "shopPrice": 60
+    },
+    {
+      "id": "food_premium",
+      "name": "Comida Premium",
+      "rarity": "rare",
+      "type": "food",
+      "hungerRestore": 80,
+      "happinessRestore": 25,
+      "shopPrice": 120
+    },
+    {
+      "id": "toy_basic",
+      "name": "Brinquedo Simples",
+      "rarity": "common",
+      "type": "toy",
+      "hungerRestore": 0,
+      "happinessRestore": 15,
+      "shopPrice": 20
+    },
+    {
+      "id": "toy_happiness",
+      "name": "Item de Felicidade",
+      "rarity": "uncommon",
+      "type": "toy",
+      "hungerRestore": 0,
+      "happinessRestore": 30,
+      "shopPrice": 80
+    },
+    {
+      "id": "item_rare_01",
+      "name": "Item Exclusivo",
+      "rarity": "rare+",
+      "type": "exclusive",
+      "hungerRestore": 0,
+      "happinessRestore": 50,
+      "shopPrice": -1
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "baseIncomeRates": {
+    "energyHigh": 2.0,
+    "energyMedium": 1.0,
+    "energyLow": 0.5
+  },
+  "happinessBonus": 0.5,
+  "hungerPenalty": 0.5,
+  "energyThresholds": {
+    "high": 70,
+    "medium": 40
+  },
+  "hungerThreshold": 20,
+  "happinessThreshold": 70,
+  "tickIntervalSeconds": 60
+}

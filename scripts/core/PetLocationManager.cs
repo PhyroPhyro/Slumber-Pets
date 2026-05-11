@@ -1,0 +1,78 @@
+using Godot;
+using System;
+public enum PetLocation
+{
+PC,
+Mobile
+}
+public enum PetTransferState
+{
+None,
+Sending,
+Receiving,
+Failed
+}
+public partial class PetLocationManager : Node
+{
+[Signal] public delegate void OnPetSentEventHandler();
+[Signal] public delegate void OnPetReceivedEventHandler();
+[Signal] public delegate void OnTransferFailedEventHandler(string reason);
+[Signal] public delegate void OnLocationChangedEventHandler(PetLocation newLocation);
+private PetLocation _currentLocation = PetLocation.PC;
+private PetTransferState _transferState = PetTransferState.None;
+private string _transferId = string.Empty;
+public PetLocation CurrentLocation => _currentLocation;
+public PetTransferState TransferState => _transferState;
+public string TransferId => _transferId;
+public bool IsTransferring => _transferState == PetTransferState.Sending || _transferState == PetTransferState.Receiving;
+public override void _Ready()
+{
+GD.Print("[PetLocationManager] Initialized. Pet location: ", _currentLocation);
+}
+public void SetLocation(PetLocation location)
+{
+if (_transferState != PetTransferState.None && _transferState != PetTransferState.Failed)
+{
+GD.PrintErr("[PetLocationManager] Cannot change location while transferring");
+return;
+}
+PetLocation oldLocation = _currentLocation;
+_currentLocation = location;
+GD.Print("[PetLocationManager] Pet location changed: ", oldLocation, " -> ", _currentLocation);
+EmitSignal(SignalName.OnLocationChanged, Variant.From((int)_currentLocation));
+}
+public void StartTransfer(string transferId)
+{
+_transferState = PetTransferState.Sending;
+_transferId = transferId;
+GD.Print("[PetLocationManager] Transfer started: ", transferId);
+}
+public void CompleteTransfer()
+{
+_transferState = PetTransferState.None;
+_transferId = string.Empty;
+GD.Print("[PetLocationManager] Transfer completed");
+EmitSignal(SignalName.OnPetSent);
+}
+public void ReceiveTransfer()
+{
+_transferState = PetTransferState.None;
+_transferId = string.Empty;
+GD.Print("[PetLocationManager] Transfer received");
+EmitSignal(SignalName.OnPetReceived);
+}
+public void FailTransfer(string reason)
+{
+_transferState = PetTransferState.Failed;
+GD.PrintErr("[PetLocationManager] Transfer failed: ", reason);
+EmitSignal(SignalName.OnTransferFailed, reason);
+}
+public bool CanInteract()
+{
+return !IsTransferring;
+}
+public bool IsPetAtCurrentPlatform(PetLocation platform)
+{
+return _currentLocation == platform && !IsTransferring;
+}
+}

@@ -1,0 +1,52 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Slumber Pets"
+run/main_scene="res://scenes/main_desktop.tscn"
+config/features=PackedStringArray("4.4", "C#", "Mobile")
+config/icon="res://icon.svg"
+
+[autoload]
+
+GameManager="*res://scripts/core/GameManager.cs"
+SaveManager="*res://scripts/core/SaveManager.cs"
+PetLocationManager="*res://scripts/core/PetLocationManager.cs"
+PetNeeds="*res://scripts/pet/PetNeeds.cs"
+ResourceManager="*res://scripts/economy/ResourceManager.cs"
+InventoryManager="*res://scripts/economy/InventoryManager.cs"
+IdleIncomeManager="*res://scripts/economy/IdleIncomeManager.cs"
+ShopManager="*res://scripts/economy/ShopManager.cs"
+AccelerometerReader="*res://scripts/sleep/AccelerometerReader.cs"
+SleepTracker="*res://scripts/sleep/SleepTracker.cs"
+StepCounter="*res://scripts/walk/StepCounter.cs"
+MilestoneManager="*res://scripts/walk/MilestoneManager.cs"
+ItemRoller="*res://scripts/walk/ItemRoller.cs"
+WalkTracker="*res://scripts/walk/WalkTracker.cs"
+LanDiscovery="*res://scripts/network/LanDiscovery.cs"
+SyncHost="*res://scripts/network/SyncHost.cs"
+SyncClient="*res://scripts/network/SyncClient.cs"
+PetTransferManager="*res://scripts/network/PetTransferManager.cs"
+
+[display]
+
+window/size/viewport_width=320
+window/size/viewport_height=180
+window/stretch/mode="canvas_items"
+
+[dotnet]
+
+project/assembly_name="SlumberPets"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+renderer/rendering_method="mobile"

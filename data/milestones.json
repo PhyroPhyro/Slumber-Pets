@@ -1,0 +1,13 @@
+{
+  "milestones": [
+    { "index": 0, "steps": 500, "rarity": "common", "rareChance": 5 },
+    { "index": 1, "steps": 1000, "rarity": "common+", "rareChance": 15 },
+    { "index": 2, "steps": 2000, "rarity": "uncommon", "rareChance": 30 },
+    { "index": 3, "steps": 3500, "rarity": "uncommon+", "rareChance": 50 },
+    { "index": 4, "steps": 5000, "rarity": "rare", "rareChance": 75 },
+    { "index": 5, "steps": 6500, "rarity": "rare+", "rareChance": 90 },
+    { "index": 6, "steps": 8000, "rarity": "rare+", "rareChance": 90 },
+    { "index": 7, "steps": 9500, "rarity": "rare+", "rareChance": 90 }
+  ],
+  "stepIncrementAfterMax": 1500
+}
