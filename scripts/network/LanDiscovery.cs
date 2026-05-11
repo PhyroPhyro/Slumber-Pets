@@ -78,7 +78,12 @@ GD.PrintErr("[LanDiscovery] Listen error: ", e.Message);
 });
 GD.Print("[LanDiscovery] Started listening");
 }
-public void StopBroadcasting()
+    public void StopListening()
+    {
+        GD.Print("[LanDiscovery] Stopped listening");
+    }
+
+    public void StopBroadcasting()
 {
 _isBroadcasting = false;
 _udpClient?.Close();

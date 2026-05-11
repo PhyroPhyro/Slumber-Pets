@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bfe5b3fahsm04"]
 
-[ext_resource type="Script" path="res://scripts/ui/HistoryScene.cs" id="1_hist"]
+[ext_resource type="Script" uid="uid://b20o51ug0nrfi" path="res://scripts/ui/HistoryScene.cs" id="1_hist"]
 
 [node name="History" type="Control"]
 layout_mode = 3

@@ -14,14 +14,27 @@ _petLocationManager = GetNode<PetLocationManager>("/root/PetLocationManager");
 LoadGame();
 GD.Print("[GameManager] Game initialized. Pet location: ", _currentSave.PetLocation);
 }
-private void LoadGame()
-{
-_currentSave = _saveManager.LoadSave();
-_saveManager.ApplyOfflineDecay(_currentSave);
-PetLocation location = _currentSave.PetLocation.ToLower() == "mobile" ? PetLocation.Mobile : PetLocation.PC;
-_petLocationManager.SetLocation(location);
-_saveManager.SaveGame(_currentSave);
-}
+    private void LoadGame()
+    {
+        _currentSave = _saveManager.LoadSave();
+        _saveManager.ApplyOfflineDecay(_currentSave);
+
+        bool isNewSave = string.IsNullOrEmpty(_currentSave.LastTransferId) && _currentSave.PetLocation == "pc";
+
+        if (isNewSave && PlatformUtils.IsAndroidBuild())
+        {
+            PetLocation location = PetLocation.PC;
+            _petLocationManager.SetLocation(location);
+            GD.Print("[GameManager] Android build detected - pet starts at PC (waiting for transfer)");
+        }
+        else
+        {
+            PetLocation location = _currentSave.PetLocation.ToLower() == "mobile" ? PetLocation.Mobile : PetLocation.PC;
+            _petLocationManager.SetLocation(location);
+        }
+
+        _saveManager.SaveGame(_currentSave);
+    }
 public void SaveGame()
 {
 _currentSave.PetLocation = _petLocationManager.CurrentLocation.ToString().ToLower();
