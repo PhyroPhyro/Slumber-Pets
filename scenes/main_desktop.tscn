@@ -152,3 +152,9 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 10
 text = "Receber do Mobile"
+
+[node name="ToolsButton" type="Button" parent="HUD/BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 10
+text = "Tools"

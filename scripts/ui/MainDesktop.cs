@@ -14,6 +14,7 @@ private Label _statusLabel;
     private Button _historyButton;
     private Button _sendPetButton;
     private Button _receivePetButton;
+    private Button _toolsButton;
 public override void _Ready()
 {
 _hungerLabel = GetNode<Label>("HUD/Attributes/HungerLabel");
@@ -28,11 +29,13 @@ _statusLabel = GetNode<Label>("HUD/StatusLabel");
     _historyButton = GetNode<Button>("HUD/BottomBar/HistoryButton");
     _sendPetButton = GetNode<Button>("HUD/BottomBar/SendPetButton");
     _receivePetButton = GetNode<Button>("HUD/BottomBar/ReceivePetButton");
+    _toolsButton = GetNode<Button>("HUD/BottomBar/ToolsButton");
     _shopButton.Pressed += OnShopPressed;
     _inventoryButton.Pressed += OnInventoryPressed;
     _historyButton.Pressed += OnHistoryPressed;
     _sendPetButton.Pressed += OnSendPetPressed;
     _receivePetButton.Pressed += OnReceivePetPressed;
+    _toolsButton.Pressed += OnToolsPressed;
     var petLocationManager = GetNode<PetLocationManager>("/root/PetLocationManager");
     if (petLocationManager.CurrentLocation == PetLocation.Mobile)
     {
@@ -64,6 +67,11 @@ GetTree().ChangeSceneToFile("res://scenes/ui/history.tscn");
     private void OnReceivePetPressed()
     {
         GetTree().ChangeSceneToFile("res://scenes/transfer/pet_receive_desktop.tscn");
+    }
+
+    private void OnToolsPressed()
+    {
+        GetTree().ChangeSceneToFile("res://scenes/ui/tools_menu.tscn");
     }
 private void InitializeHUD()
 {

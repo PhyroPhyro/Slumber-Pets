@@ -47,21 +47,24 @@ _transferState = PetTransferState.Sending;
 _transferId = transferId;
 GD.Print("[PetLocationManager] Transfer started: ", transferId);
 }
-public void CompleteTransfer()
-{
-_transferState = PetTransferState.None;
-_transferId = string.Empty;
-GD.Print("[PetLocationManager] Transfer completed");
-EmitSignal(SignalName.OnPetSent);
-}
-public void ReceiveTransfer()
-{
-_transferState = PetTransferState.None;
-_transferId = string.Empty;
-GD.Print("[PetLocationManager] Transfer received");
-EmitSignal(SignalName.OnPetReceived);
-}
-public void FailTransfer(string reason)
+    public void CompleteTransfer(PetLocation newLocation)
+    {
+        _transferState = PetTransferState.None;
+        _transferId = string.Empty;
+        _currentLocation = newLocation;
+        GD.Print("[PetLocationManager] Transfer completed. New location: ", _currentLocation);
+        EmitSignal(SignalName.OnPetSent);
+    }
+
+    public void ReceiveTransfer(PetLocation newLocation)
+    {
+        _transferState = PetTransferState.None;
+        _transferId = string.Empty;
+        _currentLocation = newLocation;
+        GD.Print("[PetLocationManager] Transfer received. New location: ", _currentLocation);
+        EmitSignal(SignalName.OnPetReceived);
+    }
+    public void FailTransfer(string reason)
 {
 _transferState = PetTransferState.Failed;
 GD.PrintErr("[PetLocationManager] Transfer failed: ", reason);

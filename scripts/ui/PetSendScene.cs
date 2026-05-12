@@ -19,32 +19,61 @@ public partial class PetSendScene : Control
         _transferManager.OnTransferStarted += OnTransferStarted;
         _transferManager.OnTransferCompleted += OnTransferCompleted;
         _transferManager.OnTransferFailed += OnTransferFailed;
+        _authManager.OnSessionRestored += OnSessionRestored;
 
         var cancelButton = GetNode<Button>("VBox/CancelButton");
         cancelButton.Pressed += OnCancelPressed;
 
         _actionButton.Pressed += OnActionPressed;
 
-        if (_authManager.IsLoggedIn)
+        UpdateAuthUI();
+
+        GD.Print("[PetSendScene] Initialized");
+    }
+
+    private void OnSessionRestored(bool success)
+    {
+        UpdateAuthUI();
+    }
+
+    private void UpdateAuthUI()
+    {
+        if (_authManager.IsAuthenticated)
         {
             _statusLabel.Text = "Conectado como " + _authManager.UserEmail;
             _actionButton.Text = "Enviar Pet para Mobile";
+            _actionButton.Disabled = false;
+        }
+        else if (!_authManager.SessionRestoreComplete)
+        {
+            _statusLabel.Text = "Restaurando sessão...";
+            _actionButton.Text = "Aguarde...";
+            _actionButton.Disabled = true;
         }
         else
         {
             _statusLabel.Text = "Login necessário para enviar o pet";
             _actionButton.Text = "Fazer Login";
+            _actionButton.Disabled = false;
         }
-
-        GD.Print("[PetSendScene] Initialized");
     }
 
     private void OnActionPressed()
     {
         if (_isProcessing) return;
+        
+        GD.Print("[PetSendScene] Action pressed. IsLoggedIn=", _authManager.IsLoggedIn, " IsAuthenticated=", _authManager.IsAuthenticated, " RestoreComplete=", _authManager.SessionRestoreComplete);
 
-        if (!_authManager.IsLoggedIn)
+        if (!_authManager.SessionRestoreComplete)
         {
+            GD.Print("[PetSendScene] Session restore pending, ignoring click");
+            return;
+        }
+
+        if (!_authManager.IsAuthenticated)
+        {
+            GD.Print("[PetSendScene] Not authenticated, redirecting to login");
+            SceneNavigator.ReturnScene = "res://scenes/main_desktop.tscn";
             GetTree().ChangeSceneToFile("res://scenes/ui/account_settings.tscn");
             return;
         }
@@ -63,12 +92,10 @@ public partial class PetSendScene : Control
     private async void OnTransferCompleted()
     {
         _statusLabel.Text = "Pet enviado com sucesso!";
-        var petLocationManager = GetNode<PetLocationManager>("/root/PetLocationManager");
-        petLocationManager.SetLocation(PetLocation.Mobile);
         var gameManager = GetNode<GameManager>("/root/GameManager");
         gameManager.SaveGame();
         _transferManager.StopTransfer();
-        await ToSignal(GetTree().CreateTimer(2.0f), "timeout");
+        await ToSignal(GetTree().CreateTimer(2.0f), SceneTreeTimer.SignalName.Timeout);
         GetTree().ChangeSceneToFile("res://scenes/main_desktop.tscn");
     }
 

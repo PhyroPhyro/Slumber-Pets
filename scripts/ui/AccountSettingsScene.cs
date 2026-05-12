@@ -10,7 +10,9 @@ public partial class AccountSettingsScene : Control
     private Button _loginButton;
     private Button _registerButton;
     private Button _logoutButton;
+    private Button _cancelButton;
     private FirebaseAuthManager _authManager;
+    private string _previousScene = "";
 
     public override void _Ready()
     {
@@ -21,6 +23,7 @@ public partial class AccountSettingsScene : Control
         _loginButton = GetNode<Button>("VBox/LoginButton");
         _registerButton = GetNode<Button>("VBox/RegisterButton");
         _logoutButton = GetNode<Button>("VBox/LogoutButton");
+        _cancelButton = GetNode<Button>("VBox/CancelButton");
         _authManager = GetNode<FirebaseAuthManager>("/root/FirebaseAuthManager");
 
         _authManager.OnLoginSuccess += OnLoginSuccess;
@@ -31,17 +34,25 @@ public partial class AccountSettingsScene : Control
         _registerButton.Pressed += OnRegisterPressed;
         _logoutButton.Pressed += OnLogoutPressed;
 
-        var cancelButton = GetNode<Button>("VBox/CancelButton");
-        cancelButton.Pressed += OnCancelPressed;
+        _cancelButton.Pressed += OnCancelPressed;
+
+        _previousScene = SceneNavigator.ReturnScene;
+        if (string.IsNullOrEmpty(_previousScene))
+        {
+            _previousScene = OS.HasFeature("Android")
+                ? "res://scenes/main_mobile.tscn"
+                : "res://scenes/main_desktop.tscn";
+        }
+        SceneNavigator.ReturnScene = "";
 
         UpdateUI();
 
-        GD.Print("[AccountSettingsScene] Initialized");
+        GD.Print("[AccountSettingsScene] Initialized, return scene: ", _previousScene);
     }
 
     private void UpdateUI()
     {
-        if (_authManager.IsLoggedIn)
+        if (_authManager.IsAuthenticated)
         {
             _statusLabel.Text = "Conectado";
             _emailLabel.Text = _authManager.UserEmail;
@@ -108,13 +119,15 @@ public partial class AccountSettingsScene : Control
         _authManager.Logout();
     }
 
-    private void OnLoginSuccess()
+    private async void OnLoginSuccess()
     {
         GD.Print("[AccountSettingsScene] OnLoginSuccess signal received!");
         _statusLabel.Text = "Login bem-sucedido!";
         UpdateUI();
         _loginButton.Disabled = false;
         _registerButton.Disabled = false;
+        await ToSignal(GetTree().CreateTimer(1.0f), SceneTreeTimer.SignalName.Timeout);
+        GetTree().ChangeSceneToFile(_previousScene);
     }
 
     private void OnLoginFailed(string reason)
@@ -132,6 +145,11 @@ public partial class AccountSettingsScene : Control
 
     private void OnCancelPressed()
     {
-        GetTree().ChangeSceneToFile("res://scenes/main_desktop.tscn");
+        GetTree().ChangeSceneToFile(_previousScene);
+    }
+
+    private void OnBackPressed()
+    {
+        GetTree().ChangeSceneToFile(_previousScene);
     }
 }

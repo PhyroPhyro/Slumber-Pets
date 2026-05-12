@@ -6,6 +6,7 @@ public class PetSnapshot
     public int Version { get; set; } = 1;
     public string TransferId { get; set; } = string.Empty;
     public string PetLocation { get; set; } = "pc";
+    public string Status { get; set; } = "pending";
     public DateTime TransferredAt { get; set; } = DateTime.UtcNow;
     public PetState Pet { get; set; } = new();
     public InventoryData Inventory { get; set; } = new();

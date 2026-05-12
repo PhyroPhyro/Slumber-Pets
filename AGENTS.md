@@ -7,6 +7,7 @@
 
 ## Developer Workflow
 - Open `project.godot` in Godot 4.4 editor to run/build
+- **ALWAYS build after any code change** — Godot C# compilation catches errors that won't show until runtime; verify build succeeds before considering a task complete
 - No lint, typecheck, or test commands — verify by running in editor
 - `.godot/` is gitignored (editor cache); safe to delete and regenerate
 
@@ -19,16 +20,17 @@
 ### Directory layout
 | Path | Domain |
 |---|---|
-| `scripts/core/` | GameManager, SaveManager, PetState, PetLocationManager |
+| `scripts/core/` | GameManager, SaveManager, PetState, PetLocationManager, SceneNavigator |
 | `scripts/pet/` | PetNeeds (hunger/energy/happiness decay) |
 | `scripts/economy/` | ResourceManager, InventoryManager, ShopManager, IdleIncomeManager |
 | `scripts/sleep/` | SleepTracker, AccelerometerReader |
 | `scripts/walk/` | WalkTracker, StepCounter, MilestoneManager, ItemRoller |
-| `scripts/network/` | LanDiscovery, SyncHost, SyncClient, PetTransferManager |
-| `scripts/ui/` | Scene controllers (MainDesktop, MainMobile, ShopScene, etc.) |
+| `scripts/network/` | PetTransferManager, FirestoreService, FirebaseAuthManager, FirebaseConfig |
+| `scripts/ui/` | Scene controllers (MainDesktop, MainMobile, ShopScene, AccountSettingsScene, ToolsMenuScene, etc.) |
 | `scenes/` | `.tscn` files mirroring script domains |
 | `scenes/transfer/` | `pet_send.tscn`, `pet_receive.tscn`, `pet_return.tscn`, `pet_receive_desktop.tscn` |
-| `data/` | Game balance/config JSON (items, balance, milestones) |
+| `scenes/ui/` | `account_settings.tscn`, `tools_menu.tscn`, `inventory.tscn`, `history.tscn` |
+| `data/` | Game balance/config JSON (items, balance, milestones, firebase_config.json) |
 
 ### Key autoload load order dependency
 Scripts reference each other via `/root/<AutoloadName>`. If adding a new autoload that depends on an existing one, register it **after** its dependency in `project.godot` `[autoload]` section.
@@ -57,13 +59,29 @@ Scripts reference each other via `/root/<AutoloadName>`. If adding a new autoloa
 - **Tracker initialization** — `SleepModeScene` and `WalkModeScene` must fetch their trackers from `/root/` and connect signals before calling `StartSleep()`/`StartWalk()`
 
 ## Known Gotchas
+
+### Firebase / Firestore
+- **`FirebaseAuthManager.SessionRestoreComplete` starts as `false`** — scenes must check this before deciding UI. If `!SessionRestoreComplete`, show "Restaurando sessão..." with disabled button. Only when `true` should you check `IsAuthenticated`.
+- **`IsAuthenticated` vs `IsLoggedIn`**: `IsLoggedIn` checks token expiration; `IsAuthenticated` only checks if `_idToken` exists. Use `IsAuthenticated` for UI/action gates — `GetValidTokenAsync()` in `FirestoreService` handles refresh automatically.
+- **`FirebaseAuthManager` is an autoload** — persists between scene changes. When resetting save, call `authManager.Logout()` first to clear in-memory tokens, or the next session will see stale `_refreshToken` and get stuck in "Restaurando sessão...".
+- **`TokenRefreshResponse.ExpiresIn` is a string** — Firebase REST API returns `expires_in` as string ("3600"), not number. `FirestoreValue.IntegerValue` is also `string` — API returns all numbers as strings.
+- **Firestore JSON serialization**: Use `[JsonPropertyName("camelCase")]` and `[JsonIgnore(Condition = WhenWritingNull)]` on `FirestoreValue` properties. The API rejects unknown fields and null values.
+- **Firestore document path**: Use `users/{userId}` (collection/document), NOT `users/{userId}/petSnapshot` (would end in collection name, causing "lacks '/'" error).
+- **Firebase config on mobile**: No environment variables on Android. Config must be in `res://data/firebase_config.json` (bundled). File is gitignored — create from `firebase_config.json.example` before export.
+- **Firestore rules**: Must allow `read, write` on `users/{userId}` where `request.auth.uid == userId`. Without this, all writes return 403.
+- **Pet transfer detection**: Use `snapshot.PetLocation != currentSave.PetLocation` to determine if a snapshot is for this device. Do NOT use `OS.HasFeature("Android")` — it can fail in test builds.
+- **`SceneNavigator.ReturnScene`**: Always set before navigating to login. Mobile scenes set `main_mobile.tscn`, desktop scenes set `main_desktop.tscn`. `AccountSettingsScene` reads this and clears after use.
+
+### Pet Transfer (Firestore)
+- **Handshake is 2-way**: Sender writes `status="pending"`, receiver writes `status="confirmed"`. Sender only completes transfer after detecting `confirmed` in its own snapshot via polling.
+- **`PetLocationManager.CompleteTransfer(newLocation)` and `ReceiveTransfer(newLocation)`** now receive the new location and update `_currentLocation`. If you don't pass the location, the save will persist the old location.
+- **`PetTransferManager.OnWriteComplete`** starts polling — does NOT complete transfer immediately. Transfer completes only when `OnSnapshotReceived` detects `status="confirmed"`.
+- **Timeout**: 30s transfer timeout. If confirmation doesn't arrive, transfer fails and pet remains with sender.
+
+### General
 - **`SyncHost.SendData()` and `SyncClient.SendData()` are async** (`Task.Run`) — never call `StopTransfer()`/`Disconnect()` before receiving confirmation from the other side, or the message may not be sent completely. The pet transfer handshake uses 4 messages (`MOBILE_READY`/`PC_READY` + `TRANSFER_CONFIRM`) to guarantee synchronization. See [[Mecanicas/Transferencia de Pet]] for the full handshake flow.
-- **Pet transfer PC → Mobile**: PC must wait for `MOBILE_READY` from mobile before sending `SEND_PET`. Mobile must wait for `TRANSFER_CONFIRM` from PC before disconnecting. If either side disconnects early, the other side never receives confirmation and the pet appears on both devices.
-- **Pet transfer Mobile → PC**: Mobile acts as host (broadcast), PC connects as client. PC sends `PAIR_REQUEST` → mobile responds `PAIR_ACK` → PC sends `PC_READY` → mobile sends `SEND_PET` → PC responds `PET_ACK` → mobile sends `TRANSFER_CONFIRM`. Same 4-way handshake, just inverted roles.
 - **`PetLocationManager.CompleteTransfer()` emits `OnPetSent`** — UI scenes should connect to `PetTransferManager.OnTransferCompleted` instead, which fires after the save is written.
-- **Bidirectional transfer**: `PetTransferManager` supports both directions via `_isMobileSending` flag. When mobile sends, `PetLocation="pc"` in snapshot; when PC sends, `PetLocation="mobile"`. `CompleteTransfer()` uses this flag to set correct location.
-- **Transfer methods**: `StartSendingAsHost()` (PC→Mobile), `StartReceivingAsClient()` (Mobile←PC), `StartSendingAsMobileHost()` (Mobile→PC), `StartReceivingFromMobile()` (PC←Mobile). Each pair uses inverted host/client roles.
-- **UI buttons**: `MainDesktop` has `SendPetButton` (visible when pet at PC) and `ReceivePetButton` (visible when pet at mobile). `MainMobile` has `ReturnButton` (sends pet back to PC) and `ReceivePetButton` (receives pet from PC).
+- **UI buttons**: `MainDesktop` has `SendPetButton` (visible when pet at PC), `ReceivePetButton` (visible when pet at mobile), and `ToolsButton`. `MainMobile` has `ReturnButton` (sends pet back to PC), `ReceivePetButton` (receives pet from PC), and `ToolsButton`.
 
 ## Session Documentation (Mandatory)
 

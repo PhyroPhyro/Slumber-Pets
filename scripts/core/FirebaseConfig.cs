@@ -34,6 +34,28 @@ public static class FirebaseConfig
             }
         }
 
+        string bundledPath = "res://data/firebase_config.json";
+        if (Godot.FileAccess.FileExists(bundledPath))
+        {
+            try
+            {
+                using Godot.FileAccess file = Godot.FileAccess.Open(bundledPath, Godot.FileAccess.ModeFlags.Read);
+                string json = file.GetAsText();
+                var config = JsonSerialization.FromJson<FirebaseConfigData>(json);
+                if (config != null)
+                {
+                    ApiKey = config.ApiKey ?? "";
+                    ProjectId = config.ProjectId ?? "";
+                    GD.Print("[FirebaseConfig] Loaded from bundled res://data/firebase_config.json");
+                    return;
+                }
+            }
+            catch (Exception e)
+            {
+                GD.PrintErr("[FirebaseConfig] Error loading bundled config: ", e.Message);
+            }
+        }
+
         string envKey = System.Environment.GetEnvironmentVariable("FIREBASE_API_KEY");
         string envProject = System.Environment.GetEnvironmentVariable("FIREBASE_PROJECT_ID");
         if (!string.IsNullOrEmpty(envKey) && !string.IsNullOrEmpty(envProject))
@@ -44,7 +66,7 @@ public static class FirebaseConfig
             return;
         }
 
-        GD.PrintErr("[FirebaseConfig] No Firebase configuration found. Set FIREBASE_API_KEY and FIREBASE_PROJECT_ID env vars, or create user://firebase_config.json");
+        GD.PrintErr("[FirebaseConfig] No Firebase configuration found. Set FIREBASE_API_KEY and FIREBASE_PROJECT_ID env vars, or create user://firebase_config.json or res://data/firebase_config.json");
     }
 
     public static void Save(string apiKey, string projectId)

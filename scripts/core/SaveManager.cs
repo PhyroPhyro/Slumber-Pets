@@ -74,7 +74,25 @@ GD.PrintErr("[SaveManager] Error saving game: ", e.Message);
 GD.PrintErr("[SaveManager] Stack: ", e.StackTrace);
 }
 }
-public void ApplyOfflineDecay(SaveData save)
+    public void ResetSave()
+    {
+        try
+        {
+            if (FileAccess.FileExists(SaveFileName))
+            {
+                DirAccess.RemoveAbsolute(SaveFileName);
+                GD.Print("[SaveManager] Save file deleted");
+            }
+            SaveData defaultSave = CreateDefaultSave();
+            SaveGame(defaultSave);
+            GD.Print("[SaveManager] Save reset to default");
+        }
+        catch (Exception e)
+        {
+            GD.PrintErr("[SaveManager] Error resetting save: ", e.Message);
+        }
+    }
+    public void ApplyOfflineDecay(SaveData save)
 {
 if (save.Pet == null) return;
 TimeSpan elapsed = DateTime.UtcNow - save.Pet.LastUpdatedAt;

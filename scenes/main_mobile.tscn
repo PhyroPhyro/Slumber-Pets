@@ -98,3 +98,7 @@ text = "Modo Passeio"
 [node name="ReturnButton" type="Button" parent="VBox/PetWithMe/Container/Buttons"]
 layout_mode = 2
 text = "Voltar para Casa (PC)"
+
+[node name="ToolsButton" type="Button" parent="VBox/PetWithMe/Container/Buttons"]
+layout_mode = 2
+text = "Tools"

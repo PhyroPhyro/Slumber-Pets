@@ -22,6 +22,11 @@ public partial class FirestoreService : Node
     public PetSnapshot LastReceivedSnapshot { get; private set; }
     public bool IsListening => _isListening;
 
+    public void SetLastKnownTransferId(string transferId)
+    {
+        _lastKnownTransferId = transferId;
+    }
+
     public override void _Ready()
     {
         _httpClient = new System.Net.Http.HttpClient();
@@ -62,15 +67,16 @@ public partial class FirestoreService : Node
         try
         {
             string userId = authManager.UserId;
-            string url = $"https://firestore.googleapis.com/v1/projects/{FirebaseConfig.ProjectId}/databases/(default)/documents/users/{userId}/petSnapshot";
+            string url = $"https://firestore.googleapis.com/v1/projects/{FirebaseConfig.ProjectId}/databases/(default)/documents/users/{userId}";
 
             var doc = new FirestoreDocument
             {
                 Fields = new FirestoreFields
                 {
-                    { "Version", new FirestoreValue { IntegerValue = snapshot.Version } },
+                    { "Version", new FirestoreValue { IntegerValue = snapshot.Version.ToString() } },
                     { "TransferId", new FirestoreValue { StringValue = snapshot.TransferId } },
                     { "PetLocation", new FirestoreValue { StringValue = snapshot.PetLocation } },
+                    { "Status", new FirestoreValue { StringValue = snapshot.Status } },
                     { "TransferredAt", new FirestoreValue { StringValue = snapshot.TransferredAt.ToString("o") } },
                     { "ConfirmedBy", new FirestoreValue { StringValue = "" } }
                 }
@@ -96,7 +102,7 @@ public partial class FirestoreService : Node
                 {
                     Fields = new FirestoreFields
                     {
-                        { "StarCoins", new FirestoreValue { IntegerValue = snapshot.Inventory.StarCoins } }
+                        { "StarCoins", new FirestoreValue { IntegerValue = snapshot.Inventory.StarCoins.ToString() } }
                     }
                 }
             };
@@ -114,6 +120,7 @@ public partial class FirestoreService : Node
             };
 
             string json = JsonSerializer.Serialize(doc);
+            GD.Print("[FirestoreService] Sending JSON: ", json.Substring(0, Math.Min(500, json.Length)));
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var request = new HttpRequestMessage(new HttpMethod("PATCH"), url)
@@ -160,7 +167,7 @@ public partial class FirestoreService : Node
         try
         {
             string userId = authManager.UserId;
-            string url = $"https://firestore.googleapis.com/v1/projects/{FirebaseConfig.ProjectId}/databases/(default)/documents/users/{userId}/petSnapshot";
+            string url = $"https://firestore.googleapis.com/v1/projects/{FirebaseConfig.ProjectId}/databases/(default)/documents/users/{userId}";
 
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Add("Authorization", $"Bearer {token}");
@@ -220,6 +227,48 @@ public partial class FirestoreService : Node
             GetPetSnapshot();
     }
 
+    public async void WriteConfirmation(string transferId)
+    {
+        GD.Print("[FirestoreService] Writing confirmation for transferId=", transferId);
+        var authManager = GetNode<FirebaseAuthManager>("/root/FirebaseAuthManager");
+        string userId = authManager.UserId;
+        string url = $"https://firestore.googleapis.com/v1/projects/{FirebaseConfig.ProjectId}/databases/(default)/documents/users/{userId}";
+
+        var doc = new FirestoreDocument
+        {
+            Fields = new FirestoreFields
+            {
+                { "TransferId", new FirestoreValue { StringValue = transferId } },
+                { "Status", new FirestoreValue { StringValue = "confirmed" } }
+            }
+        };
+
+        string json = JsonSerializer.Serialize(doc);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var request = new HttpRequestMessage(new HttpMethod("PATCH"), url)
+        {
+            Content = content
+        };
+        request.Headers.Add("Authorization", $"Bearer {authManager.IdToken}");
+
+        try
+        {
+            HttpResponseMessage response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+                GD.Print("[FirestoreService] Confirmation written successfully");
+            else
+            {
+                string body = await response.Content.ReadAsStringAsync();
+                GD.PrintErr("[FirestoreService] Failed to write confirmation: ", response.StatusCode, " ", body);
+            }
+        }
+        catch (Exception e)
+        {
+            GD.PrintErr("[FirestoreService] Confirmation write error: ", e.Message);
+        }
+    }
+
     private void SetConnectionStatus(bool connected)
     {
         if (_isConnected != connected)
@@ -236,12 +285,17 @@ public partial class FirestoreService : Node
             var fields = doc.Fields;
             var snapshot = new PetSnapshot();
 
-            if (fields.TryGetValue("Version", out var v) && v.IntegerValue.HasValue)
-                snapshot.Version = (int)v.IntegerValue.Value;
+            if (fields.TryGetValue("Version", out var v) && !string.IsNullOrEmpty(v.IntegerValue))
+            {
+                int.TryParse(v.IntegerValue, out int version);
+                snapshot.Version = version;
+            }
             if (fields.TryGetValue("TransferId", out var tid) && tid.StringValue != null)
                 snapshot.TransferId = tid.StringValue;
             if (fields.TryGetValue("PetLocation", out var pl) && pl.StringValue != null)
                 snapshot.PetLocation = pl.StringValue;
+            if (fields.TryGetValue("Status", out var st) && st.StringValue != null)
+                snapshot.Status = st.StringValue;
             if (fields.TryGetValue("TransferredAt", out FirestoreValue ta) && ta.StringValue != null)
             {
                 DateTime.TryParse(ta.StringValue, out DateTime transferredAt);
@@ -269,8 +323,11 @@ public partial class FirestoreService : Node
             {
                 var inf = invVal.MapValue.Fields;
                 snapshot.Inventory = new InventoryData();
-                if (inf.TryGetValue("StarCoins", out var sc) && sc.IntegerValue.HasValue)
-                    snapshot.Inventory.StarCoins = (int)sc.IntegerValue.Value;
+                if (inf.TryGetValue("StarCoins", out var sc) && !string.IsNullOrEmpty(sc.IntegerValue))
+                {
+                    int.TryParse(sc.IntegerValue, out int coins);
+                    snapshot.Inventory.StarCoins = coins;
+                }
             }
 
             return snapshot;
@@ -285,7 +342,10 @@ public partial class FirestoreService : Node
 
 public class FirestoreDocument
 {
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.Text.Json.Serialization.JsonIgnore]
     public string Name { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("fields")]
     public FirestoreFields Fields { get; set; }
 }
 
@@ -293,19 +353,31 @@ public class FirestoreFields : System.Collections.Generic.Dictionary<string, Fir
 
 public class FirestoreValue
 {
+    [System.Text.Json.Serialization.JsonPropertyName("stringValue")]
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string StringValue { get; set; }
-    public long? IntegerValue { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("integerValue")]
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string IntegerValue { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("doubleValue")]
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public double? DoubleValue { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("mapValue")]
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public FirestoreMap MapValue { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("arrayValue")]
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public FirestoreArray ArrayValue { get; set; }
 }
 
 public class FirestoreMap
 {
+    [System.Text.Json.Serialization.JsonPropertyName("fields")]
     public FirestoreFields Fields { get; set; }
 }
 
 public class FirestoreArray
 {
+    [System.Text.Json.Serialization.JsonPropertyName("values")]
     public System.Collections.Generic.List<FirestoreValue> Values { get; set; } = new();
 }

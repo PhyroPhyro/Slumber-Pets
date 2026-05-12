@@ -10,6 +10,7 @@ public partial class MainMobile : Control
     private Button _walkButton;
     private Button _returnButton;
     private Button _receivePetButton;
+    private Button _toolsButton;
 
     private GameManager _gameManager;
     private PetLocationManager _petLocationManager;
@@ -29,11 +30,13 @@ public partial class MainMobile : Control
         _sleepButton = GetNode<Button>("VBox/PetWithMe/Container/Buttons/SleepButton");
         _walkButton = GetNode<Button>("VBox/PetWithMe/Container/Buttons/WalkButton");
         _returnButton = GetNode<Button>("VBox/PetWithMe/Container/Buttons/ReturnButton");
+        _toolsButton = GetNode<Button>("VBox/PetWithMe/Container/Buttons/ToolsButton");
 
         _sleepButton.Pressed += OnSleepPressed;
         _walkButton.Pressed += OnWalkPressed;
         _returnButton.Pressed += OnReturnPressed;
         _receivePetButton.Pressed += OnReceivePetPressed;
+        _toolsButton.Pressed += OnToolsPressed;
 
         _petLocationManager.OnLocationChanged += OnPetLocationChanged;
 
@@ -84,5 +87,10 @@ public partial class MainMobile : Control
     private void OnReceivePetPressed()
     {
         GetTree().ChangeSceneToFile("res://scenes/transfer/pet_receive.tscn");
+    }
+
+    private void OnToolsPressed()
+    {
+        GetTree().ChangeSceneToFile("res://scenes/ui/tools_menu.tscn");
     }
 }

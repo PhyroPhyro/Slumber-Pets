@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3 uid="uid://toolsmenu001"]
+
+[ext_resource type="Script" path="res://scripts/ui/ToolsMenuScene.cs" id="1_tools"]
+
+[node name="ToolsMenuScene" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_tools")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.2, 1)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Tools"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+
+[node name="ResetButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Limpar Save"
+theme_override_font_sizes/font_size = 10
+
+[node name="StatusLabel" type="Label" parent="VBox"]
+visible = false
+layout_mode = 2
+text = "Save limpo! Reiniciando..."
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 10
+autowrap_mode = 2
+
+[node name="Spacer" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BackButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Voltar"
+theme_override_font_sizes/font_size = 10

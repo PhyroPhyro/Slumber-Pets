@@ -11,6 +11,7 @@ public partial class PetTransferManager : Node
     private FirebaseAuthManager _authManager;
     private bool _isTransferring = false;
     private string _pendingTransferId = "";
+    private string _pendingTargetLocation = "";
     private Timer _transferTimeoutTimer;
     private const float TransferTimeoutSeconds = 30.0f;
 
@@ -37,13 +38,14 @@ public partial class PetTransferManager : Node
     {
         if (_isTransferring) return;
 
-        if (!_authManager.IsLoggedIn)
+        if (!_authManager.IsAuthenticated)
         {
             EmitSignal(SignalName.OnTransferFailed, "Login required to transfer pet");
             return;
         }
 
         _isTransferring = true;
+        _pendingTargetLocation = targetLocation;
         EmitSignal(SignalName.OnTransferStarted);
 
         var gameManager = GetNode<GameManager>("/root/GameManager");
@@ -84,7 +86,7 @@ public partial class PetTransferManager : Node
 
     public void StartListeningForIncoming()
     {
-        if (!_authManager.IsLoggedIn)
+        if (!_authManager.IsAuthenticated)
         {
             GD.Print("[PetTransferManager] Not logged in, cannot listen for incoming transfers");
             return;
@@ -96,15 +98,10 @@ public partial class PetTransferManager : Node
 
     private void OnWriteComplete()
     {
-        GD.Print("[PetTransferManager] PetSnapshot written to Firestore successfully");
+        GD.Print("[PetTransferManager] PetSnapshot written to Firestore, waiting for receiver confirmation...");
         StopTransferTimeout();
-
-        var gameManager = GetNode<GameManager>("/root/GameManager");
-        gameManager.SaveGame();
-
-        GD.Print("[PetTransferManager] Transfer completed (write confirmed)");
-        _isTransferring = false;
-        EmitSignal(SignalName.OnTransferCompleted);
+        _firestoreService.StartListening();
+        GD.Print("[PetTransferManager] Now polling for confirmation from receiver");
     }
 
     private void OnSnapshotReceived()
@@ -113,20 +110,60 @@ public partial class PetTransferManager : Node
         if (snapshot == null || string.IsNullOrEmpty(snapshot.TransferId))
             return;
 
+        var gameManager = GetNode<GameManager>("/root/GameManager");
         var petLocationManager = GetNode<PetLocationManager>("/root/PetLocationManager");
 
         if (snapshot.TransferId == _pendingTransferId)
         {
-            GD.Print("[PetTransferManager] Received own snapshot confirmation, ignoring");
+            if (snapshot.Status == "confirmed")
+            {
+                GD.Print("[PetTransferManager] Receiver confirmed! Completing transfer...");
+                PetLocation newLoc = _pendingTargetLocation == "mobile" ? PetLocation.Mobile : PetLocation.PC;
+                petLocationManager.CompleteTransfer(newLoc);
+                
+                gameManager.SaveGame();
+                
+                _isTransferring = false;
+                _pendingTransferId = "";
+                _pendingTargetLocation = "";
+                StopTransferTimeout();
+                _firestoreService.StopListening();
+                EmitSignal(SignalName.OnTransferCompleted);
+            }
+            else
+            {
+                GD.Print("[PetTransferManager] Received own snapshot (status=", snapshot.Status, "), waiting for confirmation...");
+            }
             return;
         }
 
-        GD.Print("[PetTransferManager] New snapshot detected: transferId=", snapshot.TransferId, " location=", snapshot.PetLocation);
+        if (snapshot.TransferId == gameManager.CurrentSave.LastTransferId)
+        {
+            GD.Print("[PetTransferManager] Snapshot already processed (transferId=", snapshot.TransferId, "), ignoring");
+            return;
+        }
+
+        if (snapshot.Status == "confirmed")
+        {
+            GD.Print("[PetTransferManager] Snapshot already confirmed by someone else, ignoring");
+            return;
+        }
+
+        string currentSaveLocation = gameManager.CurrentSave.PetLocation.ToLower();
+        if (snapshot.PetLocation.ToLower() == currentSaveLocation)
+        {
+            GD.Print("[PetTransferManager] Snapshot location matches current save (", currentSaveLocation, "), ignoring");
+            return;
+        }
+
+        GD.Print("[PetTransferManager] Snapshot is for this device! Current: ", currentSaveLocation, " Target: ", snapshot.PetLocation);
+        GD.Print("[PetTransferManager] New snapshot detected: transferId=", snapshot.TransferId, " location=", snapshot.PetLocation, " status=", snapshot.Status);
         ReceivePet(snapshot);
     }
 
     private void ReceivePet(PetSnapshot snapshot)
     {
+        GD.Print("[PetTransferManager] ReceivePet called for transferId=", snapshot.TransferId);
         try
         {
             var gameManager = GetNode<GameManager>("/root/GameManager");
@@ -153,11 +190,18 @@ public partial class PetTransferManager : Node
 
             gameManager.CurrentSave.LastTransferId = snapshot.TransferId;
             gameManager.CurrentSave.PetLocation = snapshot.PetLocation;
-            petLocationManager.ReceiveTransfer();
+            
+            PetLocation newLoc = snapshot.PetLocation == "mobile" ? PetLocation.Mobile : PetLocation.PC;
+            petLocationManager.ReceiveTransfer(newLoc);
+            
             gameManager.SaveGame();
+
+            GD.Print("[PetTransferManager] Writing confirmation for transferId=", snapshot.TransferId);
+            _firestoreService.WriteConfirmation(snapshot.TransferId);
 
             _isTransferring = false;
             StopTransferTimeout();
+            _firestoreService.StopListening();
             EmitSignal(SignalName.OnTransferCompleted);
             GD.Print("[PetTransferManager] Pet received and saved from Firestore");
         }
@@ -213,6 +257,7 @@ public partial class PetTransferManager : Node
         _firestoreService.StopListening();
         _isTransferring = false;
         _pendingTransferId = "";
+        _pendingTargetLocation = "";
         GD.Print("[PetTransferManager] Transfer stopped");
     }
 }
