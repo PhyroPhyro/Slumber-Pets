@@ -1,23 +1,19 @@
-[gd_scene load_steps=2 format=3 uid="uid://dc8jm5sydb5up"]
+[gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/PetReceiveOnDesktopScene.cs" id="1_receive_desktop"]
+[ext_resource type="Script" path="res://scripts/ui/PetReceiveOnDesktopScene.cs" id="1_receive"]
 
 [node name="PetReceiveOnDesktopScene" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-script = ExtResource("1_receive_desktop")
+script = ExtResource("1_receive")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 color = Color(0.15, 0.15, 0.25, 1)
 
 [node name="VBox" type="VBoxContainer" parent="."]
@@ -25,8 +21,6 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="VBox"]
@@ -36,12 +30,12 @@ horizontal_alignment = 1
 
 [node name="StatusLabel" type="Label" parent="VBox"]
 layout_mode = 2
-text = "Procurando mobile na rede..."
+text = "Conectando..."
 horizontal_alignment = 1
 
-[node name="HostList" type="VBoxContainer" parent="VBox"]
+[node name="ActionButton" type="Button" parent="VBox"]
 layout_mode = 2
-size_flags_vertical = 3
+text = "Aguardando pet do Mobile"
 
 [node name="Spacer" type="Control" parent="VBox"]
 layout_mode = 2

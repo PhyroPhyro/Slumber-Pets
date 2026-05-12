@@ -5,14 +5,16 @@ public partial class PetReturnScene : Control
 {
     private Label _statusLabel;
     private PetTransferManager _transferManager;
-    private LanDiscovery _lanDiscovery;
-    private bool _isConnecting = false;
+    private FirebaseAuthManager _authManager;
+    private Button _actionButton;
+    private bool _isProcessing = false;
 
     public override void _Ready()
     {
         _statusLabel = GetNode<Label>("VBox/StatusLabel");
+        _actionButton = GetNode<Button>("VBox/ActionButton");
         _transferManager = GetNode<PetTransferManager>("/root/PetTransferManager");
-        _lanDiscovery = GetNode<LanDiscovery>("/root/LanDiscovery");
+        _authManager = GetNode<FirebaseAuthManager>("/root/FirebaseAuthManager");
 
         _transferManager.OnTransferStarted += OnTransferStarted;
         _transferManager.OnTransferCompleted += OnTransferCompleted;
@@ -21,16 +23,36 @@ public partial class PetReturnScene : Control
         var cancelButton = GetNode<Button>("VBox/CancelButton");
         cancelButton.Pressed += OnCancelPressed;
 
-        _lanDiscovery.OnHostDiscovered += OnHostDiscovered;
-        _transferManager.StartSendingAsMobileHost("1234");
+        _actionButton.Pressed += OnActionPressed;
 
-        GD.Print("[PetReturnScene] Started as mobile host, waiting for PC to connect...");
+        if (_authManager.IsLoggedIn)
+        {
+            _statusLabel.Text = "Conectado como " + _authManager.UserEmail;
+            _actionButton.Text = "Enviar Pet de Volta ao PC";
+        }
+        else
+        {
+            _statusLabel.Text = "Login necessário para retornar o pet";
+            _actionButton.Text = "Fazer Login";
+        }
+
+        GD.Print("[PetReturnScene] Initialized");
     }
 
-    private void OnHostDiscovered(string ip, int port, string pin, string petLocation)
+    private void OnActionPressed()
     {
-        // Mobile is host, PC should connect to us - we don't need to connect to PC
-        // PC will discover us and connect
+        if (_isProcessing) return;
+
+        if (!_authManager.IsLoggedIn)
+        {
+            GetTree().ChangeSceneToFile("res://scenes/ui/account_settings.tscn");
+            return;
+        }
+
+        _isProcessing = true;
+        _actionButton.Disabled = true;
+        _statusLabel.Text = "Enviando pet de volta ao PC...";
+        _transferManager.SendPetToPC();
     }
 
     private void OnTransferStarted()
@@ -54,7 +76,8 @@ public partial class PetReturnScene : Control
     {
         _statusLabel.Text = "Falha na transferência: " + reason;
         _transferManager.StopTransfer();
-        _isConnecting = false;
+        _actionButton.Disabled = false;
+        _isProcessing = false;
     }
 
     private void OnCancelPressed()

@@ -31,9 +31,8 @@ StepCounter="*res://scripts/walk/StepCounter.cs"
 MilestoneManager="*res://scripts/walk/MilestoneManager.cs"
 ItemRoller="*res://scripts/walk/ItemRoller.cs"
 WalkTracker="*res://scripts/walk/WalkTracker.cs"
-LanDiscovery="*res://scripts/network/LanDiscovery.cs"
-SyncHost="*res://scripts/network/SyncHost.cs"
-SyncClient="*res://scripts/network/SyncClient.cs"
+FirebaseAuthManager="*res://scripts/network/FirebaseAuthManager.cs"
+FirestoreService="*res://scripts/network/FirestoreService.cs"
 PetTransferManager="*res://scripts/network/PetTransferManager.cs"
 
 [display]

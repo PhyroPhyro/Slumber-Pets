@@ -5,16 +5,18 @@ public partial class PetReceiveScene : Control
 {
     private Label _statusLabel;
     private PetTransferManager _transferManager;
-    private LanDiscovery _lanDiscovery;
-    private bool _isConnecting = false;
-    private Timer _searchTimeoutTimer;
-    private const float SearchTimeoutSeconds = 30.0f;
+    private FirebaseAuthManager _authManager;
+    private FirestoreService _firestoreService;
+    private Button _actionButton;
+    private bool _isListening = false;
 
     public override void _Ready()
     {
         _statusLabel = GetNode<Label>("VBox/StatusLabel");
+        _actionButton = GetNode<Button>("VBox/ActionButton");
         _transferManager = GetNode<PetTransferManager>("/root/PetTransferManager");
-        _lanDiscovery = GetNode<LanDiscovery>("/root/LanDiscovery");
+        _authManager = GetNode<FirebaseAuthManager>("/root/FirebaseAuthManager");
+        _firestoreService = GetNode<FirestoreService>("/root/FirestoreService");
 
         _transferManager.OnTransferStarted += OnTransferStarted;
         _transferManager.OnTransferCompleted += OnTransferCompleted;
@@ -23,36 +25,41 @@ public partial class PetReceiveScene : Control
         var cancelButton = GetNode<Button>("VBox/CancelButton");
         cancelButton.Pressed += OnCancelPressed;
 
-        _lanDiscovery.OnHostDiscovered += OnHostDiscovered;
-        _lanDiscovery.StartListening();
+        _actionButton.Pressed += OnActionPressed;
 
-        _searchTimeoutTimer = new Timer();
-        _searchTimeoutTimer.WaitTime = SearchTimeoutSeconds;
-        _searchTimeoutTimer.OneShot = true;
-        _searchTimeoutTimer.Timeout += OnSearchTimeout;
-        AddChild(_searchTimeoutTimer);
-        _searchTimeoutTimer.Start();
+        if (_authManager.IsLoggedIn)
+        {
+            _statusLabel.Text = "Conectado como " + _authManager.UserEmail;
+            _actionButton.Text = "Aguardando pet do PC";
+        }
+        else
+        {
+            _statusLabel.Text = "Login necessário para receber o pet";
+            _actionButton.Text = "Fazer Login";
+        }
 
-        GD.Print("[PetReceiveScene] Listening for PC hosts... (timeout: ", SearchTimeoutSeconds, "s)");
+        GD.Print("[PetReceiveScene] Initialized");
     }
 
-    private void OnHostDiscovered(string ip, int port, string pin, string petLocation)
+    private void OnActionPressed()
     {
-        if (_isConnecting) return;
+        if (_isListening) return;
 
-        if (petLocation == "pc")
+        if (!_authManager.IsLoggedIn)
         {
-            _isConnecting = true;
-            _searchTimeoutTimer.Stop();
-            _statusLabel.Text = "PC encontrado! Solicitando pet...";
-            GD.Print("[PetReceiveScene] PC found: ", ip, ":", port, " - Requesting pet transfer");
-            _transferManager.StartReceivingAsClient(ip, port);
+            GetTree().ChangeSceneToFile("res://scenes/ui/account_settings.tscn");
+            return;
         }
+
+        _isListening = true;
+        _actionButton.Disabled = true;
+        _statusLabel.Text = "Aguardando pet do PC...";
+        _transferManager.StartListeningForIncoming();
     }
 
     private void OnTransferStarted()
     {
-        _statusLabel.Text = "Solicitando transferência do pet...";
+        _statusLabel.Text = "Pet detectado! Recebendo...";
     }
 
     private async void OnTransferCompleted()
@@ -63,7 +70,6 @@ public partial class PetReceiveScene : Control
         var gameManager = GetNode<GameManager>("/root/GameManager");
         gameManager.SaveGame();
         _transferManager.StopTransfer();
-        _lanDiscovery.StopListening();
         await ToSignal(GetTree().CreateTimer(2.0f), "timeout");
         GetTree().ChangeSceneToFile("res://scenes/main_mobile.tscn");
     }
@@ -72,26 +78,13 @@ public partial class PetReceiveScene : Control
     {
         _statusLabel.Text = "Falha na transferência: " + reason;
         _transferManager.StopTransfer();
-        _lanDiscovery.StopListening();
-        _isConnecting = false;
-    }
-
-    private void OnSearchTimeout()
-    {
-        if (!_isConnecting)
-        {
-            _statusLabel.Text = "Tempo esgotado - PC não encontrado. Verifique se ambos estão na mesma rede.";
-            GD.PrintErr("[PetReceiveScene] Search timeout - no PC found");
-            _transferManager.StopTransfer();
-            _lanDiscovery.StopListening();
-        }
+        _actionButton.Disabled = false;
+        _isListening = false;
     }
 
     private void OnCancelPressed()
     {
         _transferManager.StopTransfer();
-        _lanDiscovery.StopListening();
-        _searchTimeoutTimer.Stop();
         GetTree().ChangeSceneToFile("res://scenes/main_mobile.tscn");
     }
 }

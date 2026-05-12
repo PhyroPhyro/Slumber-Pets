@@ -5,13 +5,16 @@ public partial class PetSendScene : Control
 {
     private Label _statusLabel;
     private PetTransferManager _transferManager;
-    private Timer _searchTimeoutTimer;
-    private const float SearchTimeoutSeconds = 30.0f;
+    private FirebaseAuthManager _authManager;
+    private Button _actionButton;
+    private bool _isProcessing = false;
 
     public override void _Ready()
     {
         _statusLabel = GetNode<Label>("VBox/StatusLabel");
+        _actionButton = GetNode<Button>("VBox/ActionButton");
         _transferManager = GetNode<PetTransferManager>("/root/PetTransferManager");
+        _authManager = GetNode<FirebaseAuthManager>("/root/FirebaseAuthManager");
 
         _transferManager.OnTransferStarted += OnTransferStarted;
         _transferManager.OnTransferCompleted += OnTransferCompleted;
@@ -20,22 +23,41 @@ public partial class PetSendScene : Control
         var cancelButton = GetNode<Button>("VBox/CancelButton");
         cancelButton.Pressed += OnCancelPressed;
 
-        _transferManager.StartSendingAsHost("1234");
+        _actionButton.Pressed += OnActionPressed;
 
-        _searchTimeoutTimer = new Timer();
-        _searchTimeoutTimer.WaitTime = SearchTimeoutSeconds;
-        _searchTimeoutTimer.OneShot = true;
-        _searchTimeoutTimer.Timeout += OnSearchTimeout;
-        AddChild(_searchTimeoutTimer);
-        _searchTimeoutTimer.Start();
+        if (_authManager.IsLoggedIn)
+        {
+            _statusLabel.Text = "Conectado como " + _authManager.UserEmail;
+            _actionButton.Text = "Enviar Pet para Mobile";
+        }
+        else
+        {
+            _statusLabel.Text = "Login necessário para enviar o pet";
+            _actionButton.Text = "Fazer Login";
+        }
 
-        GD.Print("[PetSendScene] Broadcasting as host... (timeout: ", SearchTimeoutSeconds, "s)");
+        GD.Print("[PetSendScene] Initialized");
+    }
+
+    private void OnActionPressed()
+    {
+        if (_isProcessing) return;
+
+        if (!_authManager.IsLoggedIn)
+        {
+            GetTree().ChangeSceneToFile("res://scenes/ui/account_settings.tscn");
+            return;
+        }
+
+        _isProcessing = true;
+        _actionButton.Disabled = true;
+        _statusLabel.Text = "Enviando pet para o Firestore...";
+        _transferManager.SendPetToMobile();
     }
 
     private void OnTransferStarted()
     {
         _statusLabel.Text = "Enviando pet...";
-        _searchTimeoutTimer.Stop();
     }
 
     private async void OnTransferCompleted()
@@ -54,20 +76,13 @@ public partial class PetSendScene : Control
     {
         _statusLabel.Text = "Falha na transferência: " + reason;
         _transferManager.StopTransfer();
-        _searchTimeoutTimer.Stop();
-    }
-
-    private void OnSearchTimeout()
-    {
-        _statusLabel.Text = "Tempo esgotado - Mobile não conectou. Verifique se ambos estão na mesma rede.";
-        GD.PrintErr("[PetSendScene] Timeout waiting for mobile connection");
-        _transferManager.StopTransfer();
+        _actionButton.Disabled = false;
+        _isProcessing = false;
     }
 
     private void OnCancelPressed()
     {
         _transferManager.StopTransfer();
-        _searchTimeoutTimer.Stop();
         GetTree().ChangeSceneToFile("res://scenes/main_desktop.tscn");
     }
 }
