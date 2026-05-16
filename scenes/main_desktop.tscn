@@ -55,6 +55,13 @@ theme_override_font_sizes/font_size = 10
 text = "Sessão: 0"
 horizontal_alignment = 2
 
+[node name="FirebaseStatusLabel" type="Label" parent="HUD/TopBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "●"
+horizontal_alignment = 2
+tooltip_text = "Firebase: Desconectado"
+
 [node name="StatusLabel" type="Label" parent="HUD"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10

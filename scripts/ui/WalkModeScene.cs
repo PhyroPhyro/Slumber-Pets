@@ -6,11 +6,13 @@ private Label _stepsLabel;
 private Label _milestonesLabel;
 private Label _itemFoundLabel;
 private WalkTracker _walkTracker;
+private ItemFoundScene _itemFoundOverlay;
 public override void _Ready()
 {
 _stepsLabel = GetNode<Label>("VBox/StepsLabel");
 _milestonesLabel = GetNode<Label>("VBox/MilestonesLabel");
 _itemFoundLabel = GetNode<Label>("VBox/ItemFoundLabel");
+_itemFoundOverlay = GetNodeOrNull<ItemFoundScene>("ItemFoundOverlay");
 var endButton = GetNode<Button>("VBox/EndWalkButton");
 endButton.Pressed += OnEndWalkPressed;
 _walkTracker = GetNode<WalkTracker>("/root/WalkTracker");
@@ -33,10 +35,19 @@ gameManager.SaveGame();
 GD.Print("[WalkModeScene] Walk report saved. Steps: ", report.Steps);
 GetTree().ChangeSceneToFile("res://scenes/main_mobile.tscn");
 }
-private void OnItemFound(Variant itemVariant)
+private async void OnItemFound(Variant itemVariant)
 {
 var item = JsonSerialization.FromJson<ItemDrop>(itemVariant.AsString());
 _itemFoundLabel.Text = "Item encontrado: " + item.Name + "!";
+if (_itemFoundOverlay != null)
+{
+_itemFoundOverlay.ShowItem(item.Id, item.Name, item.Rarity);
+}
+else
+{
+await ToSignal(GetTree().CreateTimer(2.0f), SceneTreeTimer.SignalName.Timeout);
+_itemFoundLabel.Text = "";
+}
 }
 private void OnEndWalkPressed()
 {

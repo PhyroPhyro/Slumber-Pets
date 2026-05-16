@@ -39,16 +39,23 @@ SleepQuality quality = CalculateQuality(durationMin, movementsPerHour);
 int score = CalculateScore(durationMin, movementsPerHour);
 int coinsEarned = CalculateCoins(durationMin, quality);
 string tier = GetTier(quality);
+bool midnightBonus = ApplyMidnightBonus();
+float consistencyBonus = CalculateConsistencyBonus();
+int totalCoins = coinsEarned;
+if (midnightBonus) totalCoins = (int)(totalCoins * 1.2f);
+if (consistencyBonus > 0f) totalCoins = (int)(totalCoins * (1f + consistencyBonus));
 var report = new SleepReportData
 {
 Date = _sleepStartTime.ToString("yyyy-MM-dd"),
 DurationMin = durationMin,
 Score = score,
 Tier = tier,
-CoinsEarned = coinsEarned
+CoinsEarned = totalCoins,
+MidnightBonus = midnightBonus,
+ConsistencyBonus = consistencyBonus
 };
 EmitSignal(SignalName.OnSleepEnded, JsonSerialization.ToJson(report));
-GD.Print("[SleepTracker] Sleep ended. Duration: ", durationMin, "min, Quality: ", tier, ", Coins: ", coinsEarned);
+GD.Print("[SleepTracker] Sleep ended. Duration: ", durationMin, "min, Quality: ", tier, ", Coins: ", totalCoins, " (base: ", coinsEarned, ")");
 }
 private void OnMovement(float magnitude)
 {
@@ -103,6 +110,37 @@ SleepQuality.Regular => "Regular",
 SleepQuality.Poor => "Poor",
 _ => "Unknown"
 };
+}
+private bool ApplyMidnightBonus()
+{
+DateTime localStart = _sleepStartTime.ToLocalTime();
+return localStart.Hour < 24 && localStart.Hour >= 0;
+}
+private float CalculateConsistencyBonus()
+{
+var gameManager = GetNode<GameManager>("/root/GameManager");
+var sleepHistory = gameManager.CurrentSave.SleepHistory;
+if (sleepHistory.Count < 7) return 0f;
+var last7 = sleepHistory.GetRange(Math.Max(0, sleepHistory.Count - 7), Math.Min(7, sleepHistory.Count));
+if (last7.Count < 7) return 0f;
+List<int> startHours = new List<int>();
+foreach (var report in last7)
+{
+if (int.TryParse(report.Date.Split('T').Length > 1 ? report.Date.Split('T')[1].Split(':')[0] : "0", out int hour))
+{
+startHours.Add(hour);
+}
+}
+if (startHours.Count < 7) return 0f;
+float mean = 0f;
+foreach (int h in startHours) mean += h;
+mean /= startHours.Count;
+float variance = 0f;
+foreach (int h in startHours) variance += (h - mean) * (h - mean);
+variance /= startHours.Count;
+float stdDev = Mathf.Sqrt(variance);
+if (stdDev < 1.5f) return 0.15f;
+return 0f;
 }
 public int GetMovementCount() => _movementCount;
 public TimeSpan GetElapsedSleepTime() => _isSleeping ? DateTime.UtcNow - _sleepStartTime : TimeSpan.Zero;

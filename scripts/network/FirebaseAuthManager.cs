@@ -22,6 +22,8 @@ public partial class FirebaseAuthManager : Node
     private string _localId = "";
     private string _email = "";
     private DateTime _tokenExpiresAt = DateTime.MinValue;
+    private int _refreshRetryCount = 0;
+    private const int MaxRefreshRetries = 3;
 
     public bool IsLoggedIn => !string.IsNullOrEmpty(_idToken) && DateTime.UtcNow < _tokenExpiresAt;
     public bool HasSavedSession => !string.IsNullOrEmpty(_refreshToken);
@@ -160,6 +162,7 @@ public partial class FirebaseAuthManager : Node
 
             if (response.IsSuccessStatusCode)
             {
+                _refreshRetryCount = 0;
                 var result = JsonSerializer.Deserialize<TokenRefreshResponse>(responseBody, JsonOptions);
                 if (result != null)
                 {
@@ -181,6 +184,18 @@ public partial class FirebaseAuthManager : Node
                 return false;
             }
         }
+        catch (HttpRequestException e)
+        {
+            _refreshRetryCount++;
+            if (_refreshRetryCount <= MaxRefreshRetries)
+            {
+                GD.Print("[FirebaseAuthManager] RefreshTokenAsync: Network error, retrying (", _refreshRetryCount, "/", MaxRefreshRetries, "): ", e.Message);
+                await Task.Delay(1000 * _refreshRetryCount);
+                return await RefreshTokenAsync();
+            }
+            GD.PrintErr("[FirebaseAuthManager] RefreshTokenAsync: Network error after ", MaxRefreshRetries, " retries: ", e.Message);
+            return false;
+        }
         catch (Exception e)
         {
             GD.PrintErr("[FirebaseAuthManager] RefreshTokenAsync: Token refresh error: ", e.Message);
@@ -199,7 +214,7 @@ public partial class FirebaseAuthManager : Node
         SessionRestoreComplete = true;
         SessionRestoreSuccess = false;
         DeleteSavedToken();
-        GD.Print("[FirebaseAuthManager] Logged out");
+        GD.Print("[FirebaseAuthManager] Logged out - all tokens cleared");
         EmitSignal(SignalName.OnLogout);
     }
 

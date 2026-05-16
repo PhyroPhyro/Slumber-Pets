@@ -6,6 +6,7 @@ public partial class PetTransferManager : Node
     [Signal] public delegate void OnTransferStartedEventHandler();
     [Signal] public delegate void OnTransferCompletedEventHandler();
     [Signal] public delegate void OnTransferFailedEventHandler(string reason);
+    [Signal] public delegate void OnTransferProgressEventHandler(string status, float progress);
 
     private FirestoreService _firestoreService;
     private FirebaseAuthManager _authManager;
@@ -14,6 +15,9 @@ public partial class PetTransferManager : Node
     private string _pendingTargetLocation = "";
     private Timer _transferTimeoutTimer;
     private const float TransferTimeoutSeconds = 30.0f;
+    private int _retryCount;
+    private const int MaxRetries = 3;
+    private const float RetryDelaySeconds = 5.0f;
 
     public bool IsTransferring => _isTransferring;
 
@@ -25,6 +29,8 @@ public partial class PetTransferManager : Node
         _firestoreService.OnSnapshotWriteComplete += OnWriteComplete;
         _firestoreService.OnSnapshotUpdated += OnSnapshotReceived;
         _firestoreService.OnNetworkError += OnNetworkError;
+
+        _retryCount = 0;
 
         GD.Print("[PetTransferManager] Initialized (Firebase mode)");
     }
@@ -46,7 +52,9 @@ public partial class PetTransferManager : Node
 
         _isTransferring = true;
         _pendingTargetLocation = targetLocation;
+        _retryCount = 0;
         EmitSignal(SignalName.OnTransferStarted);
+        EmitSignal(SignalName.OnTransferProgress, "Enviando dados...", 0.25f);
 
         var gameManager = GetNode<GameManager>("/root/GameManager");
         var petLocationManager = GetNode<PetLocationManager>("/root/PetLocationManager");
@@ -102,6 +110,7 @@ public partial class PetTransferManager : Node
         StopTransferTimeout();
         _firestoreService.StartListening();
         GD.Print("[PetTransferManager] Now polling for confirmation from receiver");
+        EmitSignal(SignalName.OnTransferProgress, "Aguardando confirmação...", 0.5f);
     }
 
     private void OnSnapshotReceived()
@@ -118,6 +127,7 @@ public partial class PetTransferManager : Node
             if (snapshot.Status == "confirmed")
             {
                 GD.Print("[PetTransferManager] Receiver confirmed! Completing transfer...");
+                EmitSignal(SignalName.OnTransferProgress, "Transferência confirmada!", 1.0f);
                 PetLocation newLoc = _pendingTargetLocation == "mobile" ? PetLocation.Mobile : PetLocation.PC;
                 petLocationManager.CompleteTransfer(newLoc);
                 
@@ -128,6 +138,7 @@ public partial class PetTransferManager : Node
                 _pendingTargetLocation = "";
                 StopTransferTimeout();
                 _firestoreService.StopListening();
+                _firestoreService.ClearSnapshot();
                 EmitSignal(SignalName.OnTransferCompleted);
             }
             else
@@ -158,6 +169,7 @@ public partial class PetTransferManager : Node
 
         GD.Print("[PetTransferManager] Snapshot is for this device! Current: ", currentSaveLocation, " Target: ", snapshot.PetLocation);
         GD.Print("[PetTransferManager] New snapshot detected: transferId=", snapshot.TransferId, " location=", snapshot.PetLocation, " status=", snapshot.Status);
+        EmitSignal(SignalName.OnTransferProgress, "Pet detectado! Recebendo...", 0.75f);
         ReceivePet(snapshot);
     }
 
@@ -202,6 +214,7 @@ public partial class PetTransferManager : Node
             _isTransferring = false;
             StopTransferTimeout();
             _firestoreService.StopListening();
+            _firestoreService.ClearSnapshot();
             EmitSignal(SignalName.OnTransferCompleted);
             GD.Print("[PetTransferManager] Pet received and saved from Firestore");
         }
@@ -245,9 +258,39 @@ public partial class PetTransferManager : Node
     {
         if (_isTransferring)
         {
-            GD.PrintErr("[PetTransferManager] Transfer timeout after ", TransferTimeoutSeconds, "s");
-            EmitSignal(SignalName.OnTransferFailed, "Transfer timeout — check your connection");
-            StopTransfer();
+            if (_retryCount < MaxRetries)
+            {
+                _retryCount++;
+                GD.Print("[PetTransferManager] Transfer timeout, retrying (", _retryCount, "/", MaxRetries, ")...");
+                EmitSignal(SignalName.OnTransferProgress, "Tentativa " + _retryCount + "/" + MaxRetries + "...", 0.25f);
+                
+                var gameManager = GetNode<GameManager>("/root/GameManager");
+                var petLocationManager = GetNode<PetLocationManager>("/root/PetLocationManager");
+                
+                PetSnapshot snapshot = new PetSnapshot
+                {
+                    Version = 1,
+                    TransferId = _pendingTransferId,
+                    PetLocation = _pendingTargetLocation,
+                    TransferredAt = DateTime.UtcNow,
+                    Pet = gameManager.GetPetState().Clone(),
+                    Inventory = gameManager.CurrentSave.Inventory,
+                    AccumulatedReports = new AccumulatedReports
+                    {
+                        SleepReports = gameManager.CurrentSave.SleepHistory,
+                        WalkReports = gameManager.CurrentSave.WalkHistory
+                    }
+                };
+
+                _firestoreService.SetPetSnapshot(snapshot);
+                StartTransferTimeout();
+            }
+            else
+            {
+                GD.PrintErr("[PetTransferManager] Transfer failed after ", MaxRetries, " retries");
+                EmitSignal(SignalName.OnTransferFailed, "Transfer failed after " + MaxRetries + " attempts — check your connection");
+                StopTransfer();
+            }
         }
     }
 

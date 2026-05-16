@@ -17,7 +17,19 @@ public partial class FirestoreService : Node
     private string _lastKnownTransferId = "";
     private bool _isListening = false;
     private bool _isConnected = false;
-    private const float PollIntervalSeconds = 5.0f;
+    private const float PollIntervalMinSeconds = 5.0f;
+    private const float PollIntervalMaxSeconds = 60.0f;
+    private const float PollBackoffMultiplier = 1.5f;
+    private const float RateLimitRetryDelaySeconds = 30.0f;
+    private float _currentPollInterval;
+    private int _consecutiveFailures;
+    private int _consecutiveSuccesses;
+    private const int SuccessesToResetBackoff = 3;
+    private bool _isRateLimited;
+    private int _totalPolls;
+    private int _totalPollSuccesses;
+    private int _totalPollFailures;
+    private DateTime _pollingStartTime;
 
     public PetSnapshot LastReceivedSnapshot { get; private set; }
     public bool IsListening => _isListening;
@@ -32,14 +44,18 @@ public partial class FirestoreService : Node
         _httpClient = new System.Net.Http.HttpClient();
         _httpClient.Timeout = TimeSpan.FromSeconds(15);
 
+        _currentPollInterval = PollIntervalMinSeconds;
+        _consecutiveFailures = 0;
+        _consecutiveSuccesses = 0;
+
         _pollTimer = new Timer();
-        _pollTimer.WaitTime = PollIntervalSeconds;
-        _pollTimer.OneShot = false;
+        _pollTimer.WaitTime = _currentPollInterval;
+        _pollTimer.OneShot = true;
         _pollTimer.Timeout += OnPollTick;
         AddChild(_pollTimer);
 
         FirebaseConfig.Load();
-        GD.Print("[FirestoreService] Initialized (poll interval: ", PollIntervalSeconds, "s)");
+        GD.Print("[FirestoreService] Initialized (polling: ", PollIntervalMinSeconds, "s-", PollIntervalMaxSeconds, "s, backoff x", PollBackoffMultiplier, ")");
     }
 
     public override void _ExitTree()
@@ -137,13 +153,23 @@ public partial class FirestoreService : Node
                 GD.Print("[FirestoreService] PetSnapshot written: transferId=", snapshot.TransferId, " location=", snapshot.PetLocation);
                 EmitSignal(SignalName.OnSnapshotWriteComplete);
                 SetConnectionStatus(true);
+                ResetBackoff();
             }
             else
             {
                 string body = await response.Content.ReadAsStringAsync();
+                if ((int)response.StatusCode == 429)
+                {
+                    GD.PrintErr("[FirestoreService] Rate limited on write (429), backing off for ", RateLimitRetryDelaySeconds, "s");
+                    _isRateLimited = true;
+                    _pollTimer.Stop();
+                    _pollTimer.WaitTime = RateLimitRetryDelaySeconds;
+                    if (_isListening) _pollTimer.Start();
+                }
                 GD.PrintErr("[FirestoreService] Write failed: ", response.StatusCode, " ", body);
                 EmitSignal(SignalName.OnNetworkError, "Failed to write snapshot");
                 SetConnectionStatus(false);
+                RecordFailure();
             }
         }
         catch (Exception e)
@@ -151,6 +177,7 @@ public partial class FirestoreService : Node
             GD.PrintErr("[FirestoreService] Write error: ", e.Message);
             EmitSignal(SignalName.OnNetworkError, "Connection error: " + e.Message);
             SetConnectionStatus(false);
+            RecordFailure();
         }
     }
 
@@ -186,22 +213,44 @@ public partial class FirestoreService : Node
                         LastReceivedSnapshot = snapshot;
                         EmitSignal(SignalName.OnSnapshotUpdated);
                         SetConnectionStatus(true);
+                        RecordSuccess();
                     }
+                    else
+                    {
+                        RecordFailure();
+                    }
+                }
+                else
+                {
+                    RecordFailure();
                 }
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 SetConnectionStatus(true);
+                RecordSuccess();
+            }
+            else if ((int)response.StatusCode == 429)
+            {
+                GD.PrintErr("[FirestoreService] Rate limited (429), backing off for ", RateLimitRetryDelaySeconds, "s");
+                _isRateLimited = true;
+                _pollTimer.Stop();
+                _pollTimer.WaitTime = RateLimitRetryDelaySeconds;
+                _pollTimer.Start();
+                RecordFailure();
+                EmitSignal(SignalName.OnNetworkError, "Rate limited by Firestore");
             }
             else
             {
                 SetConnectionStatus(false);
+                RecordFailure();
             }
         }
         catch (Exception e)
         {
             GD.PrintErr("[FirestoreService] Read error: ", e.Message);
             SetConnectionStatus(false);
+            RecordFailure();
         }
     }
 
@@ -209,22 +258,81 @@ public partial class FirestoreService : Node
     {
         if (_isListening) return;
         _isListening = true;
+        ResetBackoff();
         _pollTimer.Start();
         GetPetSnapshot();
-        GD.Print("[FirestoreService] Started listening (polling every ", PollIntervalSeconds, "s)");
+        _pollingStartTime = DateTime.UtcNow;
+        _totalPolls = 0;
+        _totalPollSuccesses = 0;
+        _totalPollFailures = 0;
+        GD.Print("[FirestoreService] Started listening (polling every ", _currentPollInterval, "s)");
     }
 
     public void StopListening()
     {
         _isListening = false;
         _pollTimer.Stop();
+        LogPollMetrics();
         GD.Print("[FirestoreService] Stopped listening");
     }
 
     private void OnPollTick()
     {
         if (_isListening)
+        {
+            _totalPolls++;
             GetPetSnapshot();
+            _pollTimer.Start();
+        }
+    }
+
+    private void RecordSuccess()
+    {
+        _consecutiveFailures = 0;
+        _consecutiveSuccesses++;
+        _totalPollSuccesses++;
+        if (_isRateLimited)
+        {
+            _isRateLimited = false;
+            GD.Print("[FirestoreService] Rate limit cleared");
+        }
+        if (_consecutiveSuccesses >= SuccessesToResetBackoff && _currentPollInterval > PollIntervalMinSeconds)
+        {
+            _currentPollInterval = PollIntervalMinSeconds;
+            _pollTimer.WaitTime = _currentPollInterval;
+            GD.Print("[FirestoreService] Poll backoff reset to ", _currentPollInterval, "s");
+        }
+    }
+
+    private void RecordFailure()
+    {
+        _consecutiveSuccesses = 0;
+        _consecutiveFailures++;
+        _totalPollFailures++;
+        float newInterval = _currentPollInterval * PollBackoffMultiplier;
+        if (newInterval > PollIntervalMaxSeconds)
+            newInterval = PollIntervalMaxSeconds;
+        if (newInterval != _currentPollInterval)
+        {
+            _currentPollInterval = newInterval;
+            _pollTimer.WaitTime = _currentPollInterval;
+            GD.Print("[FirestoreService] Poll backoff increased to ", _currentPollInterval, "s (failures: ", _consecutiveFailures, ")");
+        }
+    }
+
+    private void ResetBackoff()
+    {
+        _currentPollInterval = PollIntervalMinSeconds;
+        _consecutiveFailures = 0;
+        _consecutiveSuccesses = 0;
+        _pollTimer.WaitTime = _currentPollInterval;
+    }
+
+    private void LogPollMetrics()
+    {
+        TimeSpan elapsed = DateTime.UtcNow - _pollingStartTime;
+        float successRate = _totalPolls > 0 ? (_totalPollSuccesses / (float)_totalPolls) * 100 : 0;
+        GD.Print("[FirestoreService] Poll metrics: polls=", _totalPolls, " success=", _totalPollSuccesses, " fail=", _totalPollFailures, " rate=", successRate.ToString("F1"), "% elapsed=", elapsed.TotalSeconds.ToString("F0"), "s");
     }
 
     public async void WriteConfirmation(string transferId)
@@ -260,12 +368,74 @@ public partial class FirestoreService : Node
             else
             {
                 string body = await response.Content.ReadAsStringAsync();
+                if ((int)response.StatusCode == 429)
+                {
+                    GD.PrintErr("[FirestoreService] Rate limited on confirmation (429), backing off");
+                    _isRateLimited = true;
+                    _pollTimer.Stop();
+                    _pollTimer.WaitTime = RateLimitRetryDelaySeconds;
+                    if (_isListening) _pollTimer.Start();
+                }
                 GD.PrintErr("[FirestoreService] Failed to write confirmation: ", response.StatusCode, " ", body);
             }
         }
         catch (Exception e)
         {
             GD.PrintErr("[FirestoreService] Confirmation write error: ", e.Message);
+        }
+    }
+
+    public async void ClearSnapshot()
+    {
+        if (!FirebaseConfig.IsConfigured)
+            return;
+
+        var authManager = GetNode<FirebaseAuthManager>("/root/FirebaseAuthManager");
+        string token = await authManager.GetValidTokenAsync();
+        if (string.IsNullOrEmpty(token))
+            return;
+
+        try
+        {
+            string userId = authManager.UserId;
+            string url = $"https://firestore.googleapis.com/v1/projects/{FirebaseConfig.ProjectId}/databases/(default)/documents/users/{userId}";
+
+            var doc = new FirestoreDocument
+            {
+                Fields = new FirestoreFields
+                {
+                    { "TransferId", new FirestoreValue { StringValue = "" } },
+                    { "Status", new FirestoreValue { StringValue = "" } },
+                    { "PetLocation", new FirestoreValue { StringValue = "" } },
+                    { "TransferredAt", new FirestoreValue { StringValue = "" } },
+                    { "ConfirmedBy", new FirestoreValue { StringValue = "" } },
+                    { "Pet", new FirestoreValue { MapValue = new FirestoreMap { Fields = new FirestoreFields() } } },
+                    { "Inventory", new FirestoreValue { MapValue = new FirestoreMap { Fields = new FirestoreFields() } } },
+                    { "Version", new FirestoreValue { IntegerValue = "0" } }
+                }
+            };
+
+            string json = JsonSerializer.Serialize(doc);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var request = new HttpRequestMessage(new HttpMethod("PATCH"), url)
+            {
+                Content = content
+            };
+            request.Headers.Add("Authorization", $"Bearer {token}");
+
+            HttpResponseMessage response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+                GD.Print("[FirestoreService] Snapshot cleared successfully");
+            else
+            {
+                string body = await response.Content.ReadAsStringAsync();
+                GD.PrintErr("[FirestoreService] Failed to clear snapshot: ", response.StatusCode, " ", body);
+            }
+        }
+        catch (Exception e)
+        {
+            GD.PrintErr("[FirestoreService] Clear snapshot error: ", e.Message);
         }
     }
 

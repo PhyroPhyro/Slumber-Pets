@@ -4,6 +4,7 @@ using System;
 public partial class MainMobile : Control
 {
     private Label _statusLabel;
+    private Label _firebaseStatusLabel;
     private Control _petAtHomePanel;
     private Control _petWithMePanel;
     private Button _sleepButton;
@@ -14,6 +15,7 @@ public partial class MainMobile : Control
 
     private GameManager _gameManager;
     private PetLocationManager _petLocationManager;
+    private FirebaseAuthManager _authManager;
 
     public override void _Ready()
     {
@@ -22,8 +24,10 @@ public partial class MainMobile : Control
 
         _gameManager = GetNode<GameManager>("/root/GameManager");
         _petLocationManager = GetNode<PetLocationManager>("/root/PetLocationManager");
+        _authManager = GetNode<FirebaseAuthManager>("/root/FirebaseAuthManager");
 
         _statusLabel = GetNode<Label>("VBox/StatusLabel");
+        _firebaseStatusLabel = GetNode<Label>("VBox/FirebaseStatusLabel");
         _petAtHomePanel = GetNode<Control>("VBox/PetAtHome");
         _petWithMePanel = GetNode<Control>("VBox/PetWithMe");
         _receivePetButton = GetNode<Button>("VBox/PetAtHome/Container/ReceivePetButton");
@@ -39,9 +43,14 @@ public partial class MainMobile : Control
         _toolsButton.Pressed += OnToolsPressed;
 
         _petLocationManager.OnLocationChanged += OnPetLocationChanged;
+        _authManager.OnSessionRestored += OnSessionRestored;
+        _authManager.OnLoginSuccess += OnAuthChanged;
+        _authManager.OnLogout += OnAuthChanged;
+        _authManager.OnTokenRefreshed += OnAuthChanged;
 
         GD.Print("[MainMobile] Pet location: ", _petLocationManager.CurrentLocation);
         UpdateUI();
+        UpdateFirebaseStatus();
     }
 
     private void UpdateUI()
@@ -92,5 +101,37 @@ public partial class MainMobile : Control
     private void OnToolsPressed()
     {
         GetTree().ChangeSceneToFile("res://scenes/ui/tools_menu.tscn");
+    }
+
+    private void UpdateFirebaseStatus()
+    {
+        if (!_authManager.SessionRestoreComplete)
+        {
+            _firebaseStatusLabel.Text = "●";
+            _firebaseStatusLabel.LabelSettings = new LabelSettings { FontColor = new Color(1, 1, 0) };
+            _firebaseStatusLabel.TooltipText = "Firebase: Restaurando sessão...";
+        }
+        else if (_authManager.IsAuthenticated)
+        {
+            _firebaseStatusLabel.Text = "●";
+            _firebaseStatusLabel.LabelSettings = new LabelSettings { FontColor = new Color(0, 1, 0) };
+            _firebaseStatusLabel.TooltipText = "Firebase: Conectado (" + _authManager.UserEmail + ")";
+        }
+        else
+        {
+            _firebaseStatusLabel.Text = "●";
+            _firebaseStatusLabel.LabelSettings = new LabelSettings { FontColor = new Color(1, 0, 0) };
+            _firebaseStatusLabel.TooltipText = "Firebase: Desconectado";
+        }
+    }
+
+    private void OnSessionRestored(bool success)
+    {
+        CallDeferred(MethodName.UpdateFirebaseStatus);
+    }
+
+    private void OnAuthChanged()
+    {
+        CallDeferred(MethodName.UpdateFirebaseStatus);
     }
 }

@@ -34,6 +34,12 @@ layout_mode = 2
 text = "Slumber Pets"
 horizontal_alignment = 1
 
+[node name="FirebaseStatusLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "●"
+horizontal_alignment = 1
+tooltip_text = "Firebase: Desconectado"
+
 [node name="StatusLabel" type="Label" parent="VBox"]
 layout_mode = 2
 text = "Carregando..."

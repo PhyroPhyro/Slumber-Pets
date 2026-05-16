@@ -26,10 +26,12 @@
 | `scripts/sleep/` | SleepTracker, AccelerometerReader |
 | `scripts/walk/` | WalkTracker, StepCounter, MilestoneManager, ItemRoller |
 | `scripts/network/` | PetTransferManager, FirestoreService, FirebaseAuthManager, FirebaseConfig |
-| `scripts/ui/` | Scene controllers (MainDesktop, MainMobile, ShopScene, AccountSettingsScene, ToolsMenuScene, etc.) |
+| `scripts/ui/` | Scene controllers (MainDesktop, MainMobile, ShopScene, AccountSettingsScene, ToolsMenuScene, PetSendScene, PetReceiveScene, PetReturnScene, PetReceiveOnDesktopScene, PetTravelingScene, ItemFoundScene, SleepModeScene, WalkModeScene, etc.) |
 | `scenes/` | `.tscn` files mirroring script domains |
-| `scenes/transfer/` | `pet_send.tscn`, `pet_receive.tscn`, `pet_return.tscn`, `pet_receive_desktop.tscn` |
-| `scenes/ui/` | `account_settings.tscn`, `tools_menu.tscn`, `inventory.tscn`, `history.tscn` |
+| `scenes/transfer/` | `pet_send.tscn`, `pet_receive.tscn`, `pet_return.tscn`, `pet_receive_desktop.tscn`, `pet_traveling.tscn` |
+| `scenes/ui/` | `account_settings.tscn`, `tools_menu.tscn`, `inventory.tscn`, `history.tscn`, `item_found.tscn` |
+| `scenes/sleep/` | `sleep_mode.tscn` |
+| `scenes/walk/` | `walk_mode.tscn` |
 | `data/` | Game balance/config JSON (items, balance, milestones, firebase_config.json) |
 
 ### Key autoload load order dependency
@@ -37,8 +39,8 @@ Scripts reference each other via `/root/<AutoloadName>`. If adding a new autoloa
 
 ## Data Files
 - `data/balance.json` — income rates, thresholds, tick interval (60s)
-- `data/items.json` — item definitions
-- `data/milestones.json` — walk milestone rewards
+- `data/items.json` — item definitions with rarity, type, restore values, shop price
+- `data/milestones.json` — walk milestone rewards (8 milestones, 500→9500 steps)
 - These are loaded at runtime; changes require no rebuild
 
 ## Conventions
@@ -77,11 +79,16 @@ Scripts reference each other via `/root/<AutoloadName>`. If adding a new autoloa
 - **`PetLocationManager.CompleteTransfer(newLocation)` and `ReceiveTransfer(newLocation)`** now receive the new location and update `_currentLocation`. If you don't pass the location, the save will persist the old location.
 - **`PetTransferManager.OnWriteComplete`** starts polling — does NOT complete transfer immediately. Transfer completes only when `OnSnapshotReceived` detects `status="confirmed"`.
 - **Timeout**: 30s transfer timeout. If confirmation doesn't arrive, transfer fails and pet remains with sender.
+- **Retry**: 3 automatic retries with 5s delay between attempts on timeout.
+- **Transfer UI**: All transfer scenes (`PetSendScene`, `PetReceiveScene`, `PetReturnScene`, `PetReceiveOnDesktopScene`) support optional `ProgressBar` and `TextureRect` (loading icon) nodes in their scene tree. If present (`VBox/ProgressBar`, `VBox/LoadingIcon`), they show during transfer with spinning animation. Scenes use `GetNodeOrNull` so they work without these nodes too.
+- **`PetTravelingScene`**: Dedicated "pet in transit" screen with dynamic status (Sending/Receiving/Failed), 60s timeout, and auto-return to appropriate main scene.
 
 ### General
-- **`SyncHost.SendData()` and `SyncClient.SendData()` are async** (`Task.Run`) — never call `StopTransfer()`/`Disconnect()` before receiving confirmation from the other side, or the message may not be sent completely. The pet transfer handshake uses 4 messages (`MOBILE_READY`/`PC_READY` + `TRANSFER_CONFIRM`) to guarantee synchronization. See [[Mecanicas/Transferencia de Pet]] for the full handshake flow.
 - **`PetLocationManager.CompleteTransfer()` emits `OnPetSent`** — UI scenes should connect to `PetTransferManager.OnTransferCompleted` instead, which fires after the save is written.
 - **UI buttons**: `MainDesktop` has `SendPetButton` (visible when pet at PC), `ReceivePetButton` (visible when pet at mobile), and `ToolsButton`. `MainMobile` has `ReturnButton` (sends pet back to PC), `ReceivePetButton` (receives pet from PC), and `ToolsButton`.
+- **Idle income paused indicator**: `MainDesktop.UpdateCoinsPerMin()` shows "Pausado" when pet is not at PC.
+- **Sleep bonuses**: `SleepTracker` applies midnight bonus (+20%) and consistency bonus (+15% if 7-day sleep schedule std dev < 1.5h). Rare item roll chance based on quality tier.
+- **StepCounter daily reset**: Persists `_lastSaveDate` alongside steps; auto-resets on new UTC day detection.
 
 ## Session Documentation (Mandatory)
 

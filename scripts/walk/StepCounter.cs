@@ -11,6 +11,7 @@ private double _lastStepTime = 0;
 private const float Threshold = 12.0f;
 private const float MinStepInterval = 0.4f;
 private const int PersistInterval = 100;
+private string _lastSaveDate = "";
 public int StepsToday => _stepsToday;
 public override void _Ready()
 {
@@ -20,6 +21,7 @@ _stepTimer.OneShot = false;
 _stepTimer.Timeout += OnStepCheck;
 AddChild(_stepTimer);
 LoadStepsToday();
+CheckAndResetIfNewDay();
 }
 public void StartCounting()
 {
@@ -72,6 +74,7 @@ private void SaveStepsToday()
 string path = "user://saves/steps_today.dat";
 using var file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
 file.StoreVar(_stepsToday);
+file.StoreVar(_lastSaveDate);
 }
 private void LoadStepsToday()
 {
@@ -80,6 +83,23 @@ if (FileAccess.FileExists(path))
 {
 using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
 _stepsToday = (int)file.GetVar();
+Variant dateVar = file.GetVar();
+_lastSaveDate = dateVar.Obj as string ?? DateTime.UtcNow.ToString("yyyy-MM-dd");
+}
+else
+{
+_lastSaveDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+}
+}
+private void CheckAndResetIfNewDay()
+{
+string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+if (_lastSaveDate != today)
+{
+GD.Print("[StepCounter] New day detected, resetting steps. Last: ", _lastSaveDate, " Today: ", today);
+_stepsToday = 0;
+_lastSaveDate = today;
+SaveStepsToday();
 }
 }
 }
