@@ -129,6 +129,12 @@ text = " Energia"
 layout_mode = 2
 theme_override_constants/separation = 2
 
+[node name="PlayButton" type="Button" parent="HUD/BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 10
+text = "Brincar"
+
 [node name="ShopButton" type="Button" parent="HUD/BottomBar"]
 layout_mode = 2
 size_flags_horizontal = 3

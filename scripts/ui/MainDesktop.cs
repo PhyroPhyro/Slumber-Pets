@@ -10,12 +10,14 @@ private Label _coinsPerMinLabel;
 private Label _sessionCoinsLabel;
 private Label _statusLabel;
 private Label _firebaseStatusLabel;
+    private Button _playButton;
     private Button _shopButton;
     private Button _inventoryButton;
     private Button _historyButton;
     private Button _sendPetButton;
     private Button _receivePetButton;
     private Button _toolsButton;
+    private PetPlayManager _playManager;
     private FirebaseAuthManager _authManager;
 public override void _Ready()
 {
@@ -27,18 +29,24 @@ _coinsPerMinLabel = GetNode<Label>("HUD/TopBar/CoinsPerMinLabel");
 _sessionCoinsLabel = GetNode<Label>("HUD/TopBar/SessionCoinsLabel");
 _firebaseStatusLabel = GetNode<Label>("HUD/TopBar/FirebaseStatusLabel");
 _statusLabel = GetNode<Label>("HUD/StatusLabel");
+    _playButton = GetNode<Button>("HUD/BottomBar/PlayButton");
     _shopButton = GetNode<Button>("HUD/BottomBar/ShopButton");
     _inventoryButton = GetNode<Button>("HUD/BottomBar/InventoryButton");
     _historyButton = GetNode<Button>("HUD/BottomBar/HistoryButton");
     _sendPetButton = GetNode<Button>("HUD/BottomBar/SendPetButton");
     _receivePetButton = GetNode<Button>("HUD/BottomBar/ReceivePetButton");
     _toolsButton = GetNode<Button>("HUD/BottomBar/ToolsButton");
+    _playButton.Pressed += OnPlayPressed;
     _shopButton.Pressed += OnShopPressed;
     _inventoryButton.Pressed += OnInventoryPressed;
     _historyButton.Pressed += OnHistoryPressed;
     _sendPetButton.Pressed += OnSendPetPressed;
     _receivePetButton.Pressed += OnReceivePetPressed;
     _toolsButton.Pressed += OnToolsPressed;
+    _playManager = GetNode<PetPlayManager>("/root/PetPlayManager");
+    _playManager.OnCooldownChanged += UpdatePlayButton;
+    UpdatePlayButton(_playManager.CooldownRemaining);
+
     _authManager = GetNode<FirebaseAuthManager>("/root/FirebaseAuthManager");
     _authManager.OnSessionRestored += OnSessionRestored;
     _authManager.OnLoginSuccess += OnAuthChanged;
@@ -57,6 +65,32 @@ _statusLabel = GetNode<Label>("HUD/StatusLabel");
     _receivePetButton.Visible = false;
     InitializeHUD();
 }
+private void OnPlayPressed()
+{
+if (_playManager.IsOnCooldown)
+{
+_statusLabel.Text = "Brincando... aguarde " + Mathf.CeilToInt(_playManager.CooldownRemaining) + "s";
+return;
+}
+GetTree().ChangeSceneToFile("res://scenes/play/play_mode.tscn");
+}
+
+private void UpdatePlayButton(float cooldownRemaining)
+{
+if (cooldownRemaining > 0)
+{
+_playButton.Text = "Brincar (" + Mathf.CeilToInt(cooldownRemaining) + "s)";
+_playButton.Disabled = true;
+_playButton.Modulate = new Color(0.5f, 0.5f, 0.5f);
+}
+else
+{
+_playButton.Text = "Brincar";
+_playButton.Disabled = false;
+_playButton.Modulate = new Color(1, 1, 1);
+}
+}
+
 private void OnShopPressed()
 {
 GetTree().ChangeSceneToFile("res://scenes/shop/shop.tscn");

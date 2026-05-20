@@ -34,6 +34,7 @@ WalkTracker="*res://scripts/walk/WalkTracker.cs"
 FirebaseAuthManager="*res://scripts/network/FirebaseAuthManager.cs"
 FirestoreService="*res://scripts/network/FirestoreService.cs"
 PetTransferManager="*res://scripts/network/PetTransferManager.cs"
+PetPlayManager="*res://scripts/pet/PetPlayManager.cs"
 
 [display]
 
