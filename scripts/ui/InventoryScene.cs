@@ -33,8 +33,17 @@ backButton.Pressed += OnBackPressed;
 RefreshItemList();
 }
 
+public override void _ExitTree()
+{
+if (_inventoryManager != null)
+_inventoryManager.OnInventoryChanged -= RefreshItemList;
+if (_resourceManager != null)
+_resourceManager.OnStarCoinsChanged -= UpdateCoins;
+}
+
 private void RefreshItemList()
 {
+if (!IsInstanceValid(_itemList)) return;
 foreach (Node child in _itemList.GetChildren())
 {
 child.QueueFree();
@@ -131,6 +140,7 @@ _feedbackLabel.Text = "";
 
 private void UpdateCoins(int amount)
 {
+if (!IsInstanceValid(_coinsLabel)) return;
 _coinsLabel.Text = "Inventário - Moedas: " + amount;
 }
 

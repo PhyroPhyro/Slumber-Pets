@@ -21,7 +21,7 @@
 | Path | Domain |
 |---|---|
 | `scripts/core/` | GameManager, SaveManager, PetState, PetLocationManager, SceneNavigator |
-| `scripts/pet/` | PetNeeds (hunger/energy/happiness decay) |
+| `scripts/pet/` | PetNeeds (hunger/energy/happiness decay), PetPlayManager (play session, combo, cooldown) |
 | `scripts/economy/` | ResourceManager, InventoryManager, ShopManager, IdleIncomeManager |
 | `scripts/sleep/` | SleepTracker, AccelerometerReader |
 | `scripts/walk/` | WalkTracker, StepCounter, MilestoneManager, ItemRoller |
@@ -32,6 +32,8 @@
 | `scenes/ui/` | `account_settings.tscn`, `tools_menu.tscn`, `inventory.tscn`, `history.tscn`, `item_found.tscn` |
 | `scenes/sleep/` | `sleep_mode.tscn` |
 | `scenes/walk/` | `walk_mode.tscn` |
+| `scenes/play/` | `play_mode.tscn` |
+| `scenes/shop/` | `shop.tscn` |
 | `data/` | Game balance/config JSON (items, balance, milestones, firebase_config.json) |
 
 ### Key autoload load order dependency
@@ -84,8 +86,9 @@ Scripts reference each other via `/root/<AutoloadName>`. If adding a new autoloa
 - **`PetTravelingScene`**: Dedicated "pet in transit" screen with dynamic status (Sending/Receiving/Failed), 60s timeout, and auto-return to appropriate main scene.
 
 ### General
+- **Signal cleanup**: Scene scripts that connect to autoload signals MUST disconnect them in `_ExitTree()` to avoid `ObjectDisposedException` when the scene is freed. Always use `IsInstanceValid()` guards in signal handlers that access scene nodes. Pattern: store autoload references in fields, connect in `_Ready()`, disconnect in `_ExitTree()`.
 - **`PetLocationManager.CompleteTransfer()` emits `OnPetSent`** — UI scenes should connect to `PetTransferManager.OnTransferCompleted` instead, which fires after the save is written.
-- **UI buttons**: `MainDesktop` has `SendPetButton` (visible when pet at PC), `ReceivePetButton` (visible when pet at mobile), and `ToolsButton`. `MainMobile` has `ReturnButton` (sends pet back to PC), `ReceivePetButton` (receives pet from PC), and `ToolsButton`.
+- **UI buttons**: `MainDesktop` has `PlayButton`, `ShopButton`, `InventoryButton`, `HistoryButton`, `SendPetButton` (visible when pet at PC), `ReceivePetButton` (visible when pet at mobile), and `ToolsButton`. `MainMobile` has `ReturnButton` (sends pet back to PC), `ReceivePetButton` (receives pet from PC), and `ToolsButton`.
 - **Idle income paused indicator**: `MainDesktop.UpdateCoinsPerMin()` shows "Pausado" when pet is not at PC.
 - **Sleep bonuses**: `SleepTracker` applies midnight bonus (+20%) and consistency bonus (+15% if 7-day sleep schedule std dev < 1.5h). Rare item roll chance based on quality tier.
 - **StepCounter daily reset**: Persists `_lastSaveDate` alongside steps; auto-resets on new UTC day detection.

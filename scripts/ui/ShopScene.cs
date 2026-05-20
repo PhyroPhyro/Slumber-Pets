@@ -31,6 +31,14 @@ var backButton = GetNode<Button>("MarginContainer/VBox/BackButton");
 backButton.Pressed += OnBackButtonPressed;
 }
 
+public override void _ExitTree()
+{
+if (_resourceManager != null)
+_resourceManager.OnStarCoinsChanged -= UpdateCoins;
+if (_shopManager != null)
+_shopManager.OnItemPurchased -= OnItemPurchased;
+}
+
 private void AddShopItem(ShopItem item)
 {
 var hBox = new HBoxContainer();
@@ -99,6 +107,7 @@ _shopManager.PurchaseItem(itemId);
 
 private void OnItemPurchased(string itemId)
 {
+if (!IsInstanceValid(_feedbackLabel)) return;
 var item = _shopManager.GetItem(itemId);
 ShowFeedback($"Comprou {item.Name}!", new Color(0.3f, 1, 0.3f));
 foreach (var kvp in _itemButtons)
@@ -121,6 +130,7 @@ _feedbackLabel.Text = "";
 
 private void UpdateCoins(int amount)
 {
+if (!IsInstanceValid(_coinsLabel)) return;
 _coinsLabel.Text = "Moedas: " + amount;
 foreach (var kvp in _itemButtons)
 {
