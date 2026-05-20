@@ -35,14 +35,27 @@ theme_override_constants/margin_bottom = 4
 [node name="VBox" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
 
-[node name="TitleLabel" type="Label" parent="MarginContainer/VBox"]
+[node name="Header" type="HBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "Inventário"
-horizontal_alignment = 1
+
+[node name="CoinsLabel" type="Label" parent="MarginContainer/VBox/Header"]
+layout_mode = 2
+text = "Moedas: 0"
+horizontal_alignment = 2
 
 [node name="ItemList" type="VBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
+
+[node name="FeedbackLabel" type="Label" parent="MarginContainer/VBox"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
 
 [node name="BackButton" type="Button" parent="MarginContainer/VBox"]
 layout_mode = 2
