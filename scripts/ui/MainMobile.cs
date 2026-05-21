@@ -56,19 +56,20 @@ public partial class MainMobile : Control
     private void UpdateUI()
     {
         PetLocation location = _petLocationManager.CurrentLocation;
+        string petName = _gameManager.GetPetState().Name;
 
         if (location == PetLocation.PC)
         {
             _petAtHomePanel.Visible = true;
             _petWithMePanel.Visible = false;
-            _statusLabel.Text = "Seu pet está em casa (PC)";
+            _statusLabel.Text = petName + " está em casa (PC)";
             GD.Print("[MainMobile] Pet is at PC - showing 'Pet Away' screen");
         }
         else
         {
             _petAtHomePanel.Visible = false;
             _petWithMePanel.Visible = true;
-            _statusLabel.Text = "Pet está com você!";
+            _statusLabel.Text = petName + " está com você!";
             GD.Print("[MainMobile] Pet is on mobile - showing action buttons");
         }
     }

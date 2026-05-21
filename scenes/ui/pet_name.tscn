@@ -1,0 +1,95 @@
+[gd_scene load_steps=2 format=3 uid="uid://c1p3tn4m3sc3n3"]
+
+[ext_resource type="Script" path="res://scripts/ui/PetNameScene.cs" id="1_petname"]
+
+[node name="PetNameScene" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_petname")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.12, 0.22, 1)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="TitleSpacer" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 1
+
+[node name="TitleLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Dê um nome ao seu pet!"
+horizontal_alignment = 1
+add_theme_font_size_override("font_size", 18)
+
+[node name="SubtitleLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Escolha um nome especial para seu companheiro"
+horizontal_alignment = 1
+add_theme_font_size_override("font_size", 10)
+modulate = Color(0.7, 0.7, 0.8, 1)
+
+[node name="PetIconSpacer" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 0
+custom_minimum_size = Vector2(0, 12)
+
+[node name="PetIcon" type="Label" parent="VBox"]
+layout_mode = 2
+text = "🐾"
+horizontal_alignment = 1
+add_theme_font_size_override("font_size", 32)
+
+[node name="NameSpacer" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 0
+custom_minimum_size = Vector2(0, 8)
+
+[node name="NameEdit" type="LineEdit" parent="VBox"]
+layout_mode = 2
+placeholder_text = "Nome do pet..."
+alignment = 1
+add_theme_font_size_override("font_size", 14)
+
+[node name="PetNameDisplay" type="Label" parent="VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+add_theme_font_size_override("font_size", 12)
+modulate = Color(0.9, 0.8, 0.4, 1)
+
+[node name="ErrorLabel" type="Label" parent="VBox"]
+visible = false
+layout_mode = 2
+horizontal_alignment = 1
+add_theme_font_size_override("font_size", 10)
+
+[node name="ButtonSpacer" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 0
+custom_minimum_size = Vector2(0, 8)
+
+[node name="ConfirmButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Confirmar Nome"
+add_theme_font_size_override("font_size", 12)
+
+[node name="BottomSpacer" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3

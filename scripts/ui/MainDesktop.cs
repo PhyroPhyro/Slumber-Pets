@@ -169,7 +169,7 @@ public partial class MainDesktop : Node
         UpdateCoins(_resourceManager.StarCoins);
         UpdateCoinsPerMin(_idleIncomeManager.MoedasPorMinutoAtual);
         UpdateSessionCoins(_idleIncomeManager.SessionTotalCoins);
-        _statusLabel.Text = "Pet em Casa";
+        _statusLabel.Text = GetPetNameText() + " — Em Casa";
     }
 
     private void ShowPetAwayState()
@@ -180,7 +180,7 @@ public partial class MainDesktop : Node
         _coinsLabel.Text = "0";
         _coinsPerMinLabel.Text = "0.0/min";
         _sessionCoinsLabel.Text = "Sessão: 0";
-        _statusLabel.Text = "Pet está passeando...";
+        _statusLabel.Text = GetPetNameText() + " — Passeando...";
     }
 
     private void UpdateHunger(float value)
@@ -259,5 +259,11 @@ public partial class MainDesktop : Node
     private void OnAuthChanged()
     {
         CallDeferred(MethodName.UpdateFirebaseStatus);
+    }
+
+    private string GetPetNameText()
+    {
+        var gameManager = GetNode<GameManager>("/root/GameManager");
+        return gameManager.GetPetState().Name;
     }
 }

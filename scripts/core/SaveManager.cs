@@ -15,7 +15,8 @@ return new SaveData
 Version = CurrentVersion,
 PetLocation = "pc",
 LastTransferId = string.Empty,
-Pet = new PetState(100f, 100f, 100f, DateTime.UtcNow),
+Pet = new PetState("Pet", 100f, 100f, 100f, DateTime.UtcNow),
+IsPetNamed = false,
 Inventory = new InventoryData { StarCoins = 0, Items = new System.Collections.Generic.List<ItemData>() },
 SleepHistory = new System.Collections.Generic.List<SleepReportData>(),
 WalkHistory = new System.Collections.Generic.List<WalkReportData>()
@@ -266,6 +267,7 @@ public class SaveData
 public int Version { get; set; }
 public string PetLocation { get; set; } = "pc";
 public string LastTransferId { get; set; } = string.Empty;
+public bool IsPetNamed { get; set; } = false;
 public PetState Pet { get; set; } = new();
 public InventoryData Inventory { get; set; } = new();
 public System.Collections.Generic.List<SleepReportData> SleepHistory { get; set; } = new();

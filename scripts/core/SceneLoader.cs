@@ -9,6 +9,15 @@ public partial class SceneLoader : Node
         GD.Print("[SceneLoader] OS.GetName() = ", OS.GetName());
         GD.Print("[SceneLoader] OS.HasFeature(Android) = ", OS.HasFeature("Android"));
 
+        var gameManager = GetNode<GameManager>("/root/GameManager");
+
+        if (!gameManager.CurrentSave.IsPetNamed)
+        {
+            GD.Print("[SceneLoader] First boot detected - showing pet naming scene");
+            CallDeferred(MethodName.ChangeScene, "res://scenes/ui/pet_name.tscn");
+            return;
+        }
+
         string targetScene;
 
         if (PlatformUtils.IsAndroidBuild())

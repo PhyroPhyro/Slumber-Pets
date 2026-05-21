@@ -8,6 +8,10 @@ public partial class PetNeeds : Node
 private PetState _petState;
 private Timer _decayTimer;
 private const float DecayIntervalSeconds = 60f;
+private const float OfflineMultiplier = 2.0f;
+private const float HungerDecayPerHour = 8f;
+private const float HappinessDecayPerHour = 4f;
+private const float EnergyDecayPerHour = 12f;
 public PetState CurrentState => _petState;
 public override void _Ready()
 {
@@ -29,14 +33,20 @@ private void OnDecayTick()
 if (_petState == null) return;
 double minutesElapsed = DecayIntervalSeconds / 60.0;
 double hoursElapsed = minutesElapsed / 60.0;
-float hungerDecay = 10f * (float)hoursElapsed;
-float happinessDecay = 5f * (float)hoursElapsed;
-float energyDecay = 15f * (float)hoursElapsed;
+bool isOffline = (DateTime.UtcNow - _petState.LastUpdatedAt).TotalSeconds > DecayIntervalSeconds * 2;
+float offlineMult = isOffline ? OfflineMultiplier : 1.0f;
+float hungerDecay = HungerDecayPerHour * (float)hoursElapsed * offlineMult;
+float happinessDecay = HappinessDecayPerHour * (float)hoursElapsed * offlineMult;
+float energyDecay = EnergyDecayPerHour * (float)hoursElapsed * offlineMult;
 _petState.Hunger = Mathf.Clamp(_petState.Hunger - hungerDecay, 0f, 100f);
 _petState.Happiness = Mathf.Clamp(_petState.Happiness - happinessDecay, 0f, 100f);
 _petState.Energy = Mathf.Clamp(_petState.Energy - energyDecay, 0f, 100f);
 _petState.LastUpdatedAt = DateTime.UtcNow;
 EmitSignals();
+if (isOffline)
+GD.Print("[PetNeeds] Offline decay applied (x", offlineMult, ") Hunger: -", hungerDecay.ToString("F1"), " Happiness: -", happinessDecay.ToString("F1"), " Energy: -", energyDecay.ToString("F1"));
+else
+GD.Print("[PetNeeds] Decay tick Hunger: -", hungerDecay.ToString("F1"), " Happiness: -", happinessDecay.ToString("F1"), " Energy: -", energyDecay.ToString("F1"));
 }
 public void Feed(float hungerRestore, float happinessRestore = 0f)
 {

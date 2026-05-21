@@ -8,12 +8,12 @@ public partial class PetPlayManager : Node
     [Signal] public delegate void OnTimeRemainingChangedEventHandler(float timeRemaining);
     [Signal] public delegate void OnCooldownChangedEventHandler(float cooldownRemaining);
 
-    private const float SessionDurationSeconds = 15f;
-    private const float CooldownSeconds = 60f;
-    private const float HappinessPerPoint = 0.5f;
+    private const float SessionDurationSeconds = 20f;
+    private const float CooldownSeconds = 90f;
+    private const float HappinessPerPoint = 0.4f;
     private const float MinComboMultiplier = 1f;
     private const float MaxComboMultiplier = 3f;
-    private const float ComboWindowSeconds = 1.5f;
+    private const float ComboWindowSeconds = 2.0f;
 
     private bool _isPlaying;
     private float _timeRemaining;
