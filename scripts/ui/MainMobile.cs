@@ -5,6 +5,8 @@ public partial class MainMobile : Control
 {
     private Label _statusLabel;
     private Label _firebaseStatusLabel;
+    private Label _petStateLabel;
+    private ColorRect _petPlaceholder;
     private Control _petAtHomePanel;
     private Control _petWithMePanel;
     private Button _sleepButton;
@@ -16,6 +18,7 @@ public partial class MainMobile : Control
     private GameManager _gameManager;
     private PetLocationManager _petLocationManager;
     private FirebaseAuthManager _authManager;
+    private PetSpriteAnimator _spriteAnimator;
 
     public override void _Ready()
     {
@@ -25,16 +28,22 @@ public partial class MainMobile : Control
         _gameManager = GetNode<GameManager>("/root/GameManager");
         _petLocationManager = GetNode<PetLocationManager>("/root/PetLocationManager");
         _authManager = GetNode<FirebaseAuthManager>("/root/FirebaseAuthManager");
+        _spriteAnimator = GetNode<PetSpriteAnimator>("/root/PetSpriteAnimator");
 
         _statusLabel = GetNode<Label>("VBox/StatusLabel");
         _firebaseStatusLabel = GetNode<Label>("VBox/FirebaseStatusLabel");
         _petAtHomePanel = GetNode<Control>("VBox/PetAtHome");
         _petWithMePanel = GetNode<Control>("VBox/PetWithMe");
         _receivePetButton = GetNode<Button>("VBox/PetAtHome/Container/ReceivePetButton");
+        _petPlaceholder = GetNode<ColorRect>("VBox/PetWithMe/Container/PetPlaceholder");
+        _petStateLabel = GetNode<Label>("VBox/PetWithMe/Container/PetStateLabel");
         _sleepButton = GetNode<Button>("VBox/PetWithMe/Container/Buttons/SleepButton");
         _walkButton = GetNode<Button>("VBox/PetWithMe/Container/Buttons/WalkButton");
         _returnButton = GetNode<Button>("VBox/PetWithMe/Container/Buttons/ReturnButton");
         _toolsButton = GetNode<Button>("VBox/PetWithMe/Container/Buttons/ToolsButton");
+
+        _spriteAnimator.SetPlaceholder(_petPlaceholder);
+        _spriteAnimator.OnStateChanged += OnPetStateChanged;
 
         _sleepButton.Pressed += OnSleepPressed;
         _walkButton.Pressed += OnWalkPressed;
@@ -134,5 +143,11 @@ public partial class MainMobile : Control
     private void OnAuthChanged()
     {
         CallDeferred(MethodName.UpdateFirebaseStatus);
+    }
+
+    private void OnPetStateChanged(PetSpriteState state)
+    {
+        if (!IsInstanceValid(_petStateLabel)) return;
+        _petStateLabel.Text = _spriteAnimator.GetStateDescription(state);
     }
 }

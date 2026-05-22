@@ -15,20 +15,25 @@ public partial class PetNameScene : Control
         _gameManager = GetNode<GameManager>("/root/GameManager");
         _saveManager = GetNode<SaveManager>("/root/SaveManager");
 
-        _nameEdit = GetNode<LineEdit>("VBox/NameEdit");
-        _confirmButton = GetNode<Button>("VBox/ConfirmButton");
-        _errorLabel = GetNode<Label>("VBox/ErrorLabel");
-        _petNameDisplay = GetNode<Label>("VBox/PetNameDisplay");
+        _nameEdit = GetNodeOrNull<LineEdit>("VBox/NameEdit");
+        _confirmButton = GetNodeOrNull<Button>("VBox/ConfirmButton");
+        _errorLabel = GetNodeOrNull<Label>("VBox/ErrorLabel");
+        _petNameDisplay = GetNodeOrNull<Label>("VBox/PetNameDisplay");
 
-        _confirmButton.Pressed += OnConfirmPressed;
-        _nameEdit.TextChanged += OnNameTextChanged;
-        _nameEdit.TextSubmitted += OnTextSubmitted;
+        if (_confirmButton != null)
+            _confirmButton.Pressed += OnConfirmPressed;
+        if (_nameEdit != null)
+        {
+            _nameEdit.TextChanged += OnNameTextChanged;
+            _nameEdit.TextSubmitted += OnTextSubmitted;
+            _nameEdit.MaxLength = 16;
+            _nameEdit.GrabFocus();
+        }
 
-        _nameEdit.MaxLength = 16;
-        _nameEdit.GrabFocus();
-
-        _errorLabel.Visible = false;
-        _petNameDisplay.Text = "";
+        if (_errorLabel != null)
+            _errorLabel.Visible = false;
+        if (_petNameDisplay != null)
+            _petNameDisplay.Text = "";
 
         UpdateConfirmButtonState();
 
@@ -48,12 +53,14 @@ public partial class PetNameScene : Control
 
     private void UpdateConfirmButtonState()
     {
+        if (_nameEdit == null || _confirmButton == null) return;
         string name = _nameEdit.Text.Trim();
         _confirmButton.Disabled = string.IsNullOrWhiteSpace(name) || name.Length > 16;
     }
 
     private void UpdatePetNamePreview(string name)
     {
+        if (_petNameDisplay == null) return;
         if (string.IsNullOrWhiteSpace(name))
         {
             _petNameDisplay.Text = "";
@@ -66,6 +73,7 @@ public partial class PetNameScene : Control
 
     private void OnConfirmPressed()
     {
+        if (_nameEdit == null) return;
         string name = _nameEdit.Text.Trim();
 
         if (string.IsNullOrWhiteSpace(name))
@@ -107,6 +115,7 @@ public partial class PetNameScene : Control
 
     private void ShowError(string message)
     {
+        if (_errorLabel == null) return;
         _errorLabel.Text = message;
         _errorLabel.Visible = true;
         _errorLabel.Modulate = new Color(1, 0.3f, 0.3f, 1);

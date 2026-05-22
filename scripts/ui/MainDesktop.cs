@@ -10,6 +10,8 @@ public partial class MainDesktop : Node
     private Label _sessionCoinsLabel;
     private Label _statusLabel;
     private Label _firebaseStatusLabel;
+    private Label _petStateLabel;
+    private ColorRect _petPlaceholder;
     private Button _playButton;
     private Button _shopButton;
     private Button _inventoryButton;
@@ -22,6 +24,7 @@ public partial class MainDesktop : Node
     private ResourceManager _resourceManager;
     private IdleIncomeManager _idleIncomeManager;
     private FirebaseAuthManager _authManager;
+    private PetSpriteAnimator _spriteAnimator;
 
     public override void _Ready()
     {
@@ -33,6 +36,8 @@ public partial class MainDesktop : Node
         _sessionCoinsLabel = GetNode<Label>("HUD/TopBar/SessionCoinsLabel");
         _firebaseStatusLabel = GetNode<Label>("HUD/TopBar/FirebaseStatusLabel");
         _statusLabel = GetNode<Label>("HUD/StatusLabel");
+        _petStateLabel = GetNode<Label>("HUD/PetArea/PetStateLabel");
+        _petPlaceholder = GetNode<ColorRect>("HUD/PetArea/PetPlaceholder");
         _playButton = GetNode<Button>("HUD/BottomBar/PlayButton");
         _shopButton = GetNode<Button>("HUD/BottomBar/ShopButton");
         _inventoryButton = GetNode<Button>("HUD/BottomBar/InventoryButton");
@@ -40,6 +45,10 @@ public partial class MainDesktop : Node
         _sendPetButton = GetNode<Button>("HUD/BottomBar/SendPetButton");
         _receivePetButton = GetNode<Button>("HUD/BottomBar/ReceivePetButton");
         _toolsButton = GetNode<Button>("HUD/BottomBar/ToolsButton");
+
+        _spriteAnimator = GetNode<PetSpriteAnimator>("/root/PetSpriteAnimator");
+        _spriteAnimator.SetPlaceholder(_petPlaceholder);
+        _spriteAnimator.OnStateChanged += OnPetStateChanged;
 
         _playButton.Pressed += OnPlayPressed;
         _shopButton.Pressed += OnShopPressed;
@@ -94,6 +103,14 @@ public partial class MainDesktop : Node
             _authManager.OnLogout -= OnAuthChanged;
             _authManager.OnTokenRefreshed -= OnAuthChanged;
         }
+        if (_spriteAnimator != null)
+            _spriteAnimator.OnStateChanged -= OnPetStateChanged;
+    }
+
+    private void OnPetStateChanged(PetSpriteState state)
+    {
+        if (!IsInstanceValid(_petStateLabel)) return;
+        _petStateLabel.Text = _spriteAnimator.GetStateDescription(state);
     }
 
     private void OnPlayPressed()

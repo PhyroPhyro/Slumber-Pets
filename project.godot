@@ -35,6 +35,7 @@ FirebaseAuthManager="*res://scripts/network/FirebaseAuthManager.cs"
 FirestoreService="*res://scripts/network/FirestoreService.cs"
 PetTransferManager="*res://scripts/network/PetTransferManager.cs"
 PetPlayManager="*res://scripts/pet/PetPlayManager.cs"
+PetSpriteAnimator="*res://scripts/core/PetSpriteAnimator.cs"
 
 [display]
 

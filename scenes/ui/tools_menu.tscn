@@ -36,6 +36,11 @@ text = "Tools"
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 14
 
+[node name="RenamePetButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Renomear Pet"
+theme_override_font_sizes/font_size = 10
+
 [node name="ResetButton" type="Button" parent="VBox"]
 layout_mode = 2
 text = "Limpar Save"

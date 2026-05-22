@@ -26,15 +26,17 @@ private void OnWalkStarted()
 _stepsLabel.Text = "Passos: 0";
 _milestonesLabel.Text = "Marcos: 0";
 }
-private void OnWalkEnded(Variant reportVariant)
-{
-var report = JsonSerialization.FromJson<WalkReportData>(reportVariant.AsString());
-var gameManager = GetNode<GameManager>("/root/GameManager");
-gameManager.CurrentSave.WalkHistory.Add(report);
-gameManager.SaveGame();
-GD.Print("[WalkModeScene] Walk report saved. Steps: ", report.Steps);
-GetTree().ChangeSceneToFile("res://scenes/main_mobile.tscn");
-}
+    private void OnWalkEnded(Variant reportVariant)
+    {
+        var report = JsonSerialization.FromJson<WalkReportData>(reportVariant.AsString());
+        var gameManager = GetNode<GameManager>("/root/GameManager");
+        gameManager.CurrentSave.WalkHistory.Add(report);
+        gameManager.SaveGame();
+        GD.Print("[WalkModeScene] Walk report saved. Steps: ", report.Steps);
+
+        WalkReportScene.SetPendingReport(report);
+        GetTree().ChangeSceneToFile("res://scenes/walk/walk_report.tscn");
+    }
 private async void OnItemFound(Variant itemVariant)
 {
 var item = JsonSerialization.FromJson<ItemDrop>(itemVariant.AsString());

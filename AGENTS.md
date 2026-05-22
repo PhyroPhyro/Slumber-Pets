@@ -26,12 +26,12 @@
 | `scripts/sleep/` | SleepTracker, AccelerometerReader |
 | `scripts/walk/` | WalkTracker, StepCounter, MilestoneManager, ItemRoller |
 | `scripts/network/` | PetTransferManager, FirestoreService, FirebaseAuthManager, FirebaseConfig |
-| `scripts/ui/` | Scene controllers (MainDesktop, MainMobile, ShopScene, AccountSettingsScene, ToolsMenuScene, PetSendScene, PetReceiveScene, PetReturnScene, PetReceiveOnDesktopScene, PetTravelingScene, ItemFoundScene, SleepModeScene, WalkModeScene, etc.) |
+| `scripts/ui/` | Scene controllers (MainDesktop, MainMobile, ShopScene, AccountSettingsScene, ToolsMenuScene, PetSendScene, PetReceiveScene, PetReturnScene, PetReceiveOnDesktopScene, PetTravelingScene, ItemFoundScene, SleepModeScene, WalkModeScene, WalkReportScene, PetNameScene, etc.) |
 | `scenes/` | `.tscn` files mirroring script domains |
 | `scenes/transfer/` | `pet_send.tscn`, `pet_receive.tscn`, `pet_return.tscn`, `pet_receive_desktop.tscn`, `pet_traveling.tscn` |
-| `scenes/ui/` | `account_settings.tscn`, `tools_menu.tscn`, `inventory.tscn`, `history.tscn`, `item_found.tscn` |
+| `scenes/ui/` | `account_settings.tscn`, `tools_menu.tscn`, `inventory.tscn`, `history.tscn`, `item_found.tscn`, `pet_name.tscn` |
 | `scenes/sleep/` | `sleep_mode.tscn` |
-| `scenes/walk/` | `walk_mode.tscn` |
+| `scenes/walk/` | `walk_mode.tscn`, `walk_report.tscn` |
 | `scenes/play/` | `play_mode.tscn` |
 | `scenes/shop/` | `shop.tscn` |
 | `data/` | Game balance/config JSON (items, balance, milestones, firebase_config.json) |
@@ -92,6 +92,9 @@ Scripts reference each other via `/root/<AutoloadName>`. If adding a new autoloa
 - **Idle income paused indicator**: `MainDesktop.UpdateCoinsPerMin()` shows "Pausado" when pet is not at PC.
 - **Sleep bonuses**: `SleepTracker` applies midnight bonus (+20%) and consistency bonus (+15% if 7-day sleep schedule std dev < 1.5h). Rare item roll chance based on quality tier.
 - **StepCounter daily reset**: Persists `_lastSaveDate` alongside steps; auto-resets on new UTC day detection.
+- **Walk report flow**: `WalkModeScene` → `WalkTracker.EndWalk()` → saves to `WalkHistory` → `WalkReportScene.SetPendingReport(report)` → change to `walk_report.tscn`. Report is passed via static property, not scene args.
+- **Pet name display**: `MainDesktop` and `MainMobile` show pet name from `GameManager.GetPetState().Name` in status labels. Default is "Pet" if unnamed.
+- **First boot detection**: `SceneLoader` checks `GameManager.CurrentSave.IsPetNamed` — if false, redirects to `pet_name.tscn` before main scene.
 
 ## Session Documentation (Mandatory)
 
