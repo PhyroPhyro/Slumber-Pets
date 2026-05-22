@@ -11,22 +11,22 @@ public partial class SceneLoader : Node
 
         var gameManager = GetNode<GameManager>("/root/GameManager");
 
-        if (!gameManager.CurrentSave.IsPetNamed)
-        {
-            GD.Print("[SceneLoader] First boot detected - showing pet naming scene");
-            CallDeferred(MethodName.ChangeScene, "res://scenes/ui/pet_name.tscn");
-            return;
-        }
-
         string targetScene;
 
         if (PlatformUtils.IsAndroidBuild())
         {
             targetScene = "res://scenes/main_mobile.tscn";
-            GD.Print("[SceneLoader] Android detected - loading mobile scene");
+            GD.Print("[SceneLoader] Android detected - loading mobile scene (companion app, no naming)");
         }
         else
         {
+            if (!gameManager.CurrentSave.IsPetNamed)
+            {
+                GD.Print("[SceneLoader] First boot detected - showing pet naming scene");
+                CallDeferred(MethodName.ChangeScene, "res://scenes/ui/pet_name.tscn");
+                return;
+            }
+
             targetScene = "res://scenes/main_desktop.tscn";
             GD.Print("[SceneLoader] Desktop detected - loading desktop scene");
         }

@@ -6,9 +6,8 @@ public partial class PetReceiveScene : Control
     private Label _statusLabel;
     private PetTransferManager _transferManager;
     private FirebaseAuthManager _authManager;
-    private FirestoreService _firestoreService;
     private Button _actionButton;
-    private bool _isListening = false;
+    private bool _isReceiving = false;
     private ProgressBar _progressBar;
     private TextureRect _loadingIcon;
     private float _loadingSpinAngle = 0f;
@@ -19,12 +18,13 @@ public partial class PetReceiveScene : Control
         _actionButton = GetNode<Button>("VBox/ActionButton");
         _transferManager = GetNode<PetTransferManager>("/root/PetTransferManager");
         _authManager = GetNode<FirebaseAuthManager>("/root/FirebaseAuthManager");
-        _firestoreService = GetNode<FirestoreService>("/root/FirestoreService");
 
         _transferManager.OnTransferStarted += OnTransferStarted;
         _transferManager.OnTransferCompleted += OnTransferCompleted;
         _transferManager.OnTransferFailed += OnTransferFailed;
         _transferManager.OnTransferProgress += OnTransferProgress;
+        _transferManager.OnNoRemotePet += OnNoRemotePet;
+        _transferManager.OnReceiveFailed += OnReceiveFailed;
         _authManager.OnSessionRestored += OnSessionRestored;
 
         var cancelButton = GetNode<Button>("VBox/CancelButton");
@@ -41,6 +41,17 @@ public partial class PetReceiveScene : Control
         UpdateAuthUI();
 
         GD.Print("[PetReceiveScene] Initialized");
+    }
+
+    public override void _ExitTree()
+    {
+        _transferManager.OnTransferStarted -= OnTransferStarted;
+        _transferManager.OnTransferCompleted -= OnTransferCompleted;
+        _transferManager.OnTransferFailed -= OnTransferFailed;
+        _transferManager.OnTransferProgress -= OnTransferProgress;
+        _transferManager.OnNoRemotePet -= OnNoRemotePet;
+        _transferManager.OnReceiveFailed -= OnReceiveFailed;
+        _authManager.OnSessionRestored -= OnSessionRestored;
     }
 
     public override void _Process(double delta)
@@ -62,7 +73,7 @@ public partial class PetReceiveScene : Control
         if (_authManager.IsAuthenticated)
         {
             _statusLabel.Text = "Conectado como " + _authManager.UserEmail;
-            _actionButton.Text = "Aguardando pet do PC";
+            _actionButton.Text = "Receber Pet do PC";
             _actionButton.Disabled = false;
         }
         else if (!_authManager.SessionRestoreComplete)
@@ -81,7 +92,7 @@ public partial class PetReceiveScene : Control
 
     private void OnActionPressed()
     {
-        if (_isListening) return;
+        if (_isReceiving) return;
         if (!_authManager.SessionRestoreComplete) return;
 
         if (!_authManager.IsAuthenticated)
@@ -91,21 +102,21 @@ public partial class PetReceiveScene : Control
             return;
         }
 
-        _isListening = true;
+        _isReceiving = true;
         _actionButton.Disabled = true;
-        _statusLabel.Text = "Aguardando pet do PC...";
+        _statusLabel.Text = "Verificando pet remoto...";
         if (_progressBar != null)
         {
             _progressBar.Visible = true;
             _progressBar.Value = 0;
         }
         if (_loadingIcon != null) _loadingIcon.Visible = true;
-        _transferManager.StartListeningForIncoming();
+        _transferManager.TryReceivePet();
     }
 
     private void OnTransferStarted()
     {
-        _statusLabel.Text = "Pet detectado! Recebendo...";
+        _statusLabel.Text = "Processando transferência...";
     }
 
     private void OnTransferProgress(string status, float progress)
@@ -116,6 +127,36 @@ public partial class PetReceiveScene : Control
             _progressBar.Visible = true;
             _progressBar.Value = progress * 100;
         }
+    }
+
+    private void OnNoRemotePet()
+    {
+        _statusLabel.Text = "Nenhum pet disponível para receber. Envie o pet do PC primeiro.";
+        if (_loadingIcon != null) _loadingIcon.Visible = false;
+        if (_progressBar != null) _progressBar.Visible = false;
+        _transferManager.StopTransfer();
+        _actionButton.Disabled = false;
+        _isReceiving = false;
+    }
+
+    private void OnReceiveFailed(string reason)
+    {
+        _statusLabel.Text = "Falha: " + reason;
+        if (_loadingIcon != null) _loadingIcon.Visible = false;
+        if (_progressBar != null) _progressBar.Visible = false;
+        _transferManager.StopTransfer();
+        _actionButton.Disabled = false;
+        _isReceiving = false;
+    }
+
+    private void OnTransferFailed(string reason)
+    {
+        _statusLabel.Text = "Falha na transferência: " + reason;
+        if (_loadingIcon != null) _loadingIcon.Visible = false;
+        if (_progressBar != null) _progressBar.Visible = false;
+        _transferManager.StopTransfer();
+        _actionButton.Disabled = false;
+        _isReceiving = false;
     }
 
     private async void OnTransferCompleted()
@@ -131,16 +172,6 @@ public partial class PetReceiveScene : Control
         _transferManager.StopTransfer();
         await ToSignal(GetTree().CreateTimer(2.0f), SceneTreeTimer.SignalName.Timeout);
         GetTree().ChangeSceneToFile("res://scenes/main_mobile.tscn");
-    }
-
-    private void OnTransferFailed(string reason)
-    {
-        _statusLabel.Text = "Falha na transferência: " + reason;
-        if (_loadingIcon != null) _loadingIcon.Visible = false;
-        if (_progressBar != null) _progressBar.Visible = false;
-        _transferManager.StopTransfer();
-        _actionButton.Disabled = false;
-        _isListening = false;
     }
 
     private void OnCancelPressed()

@@ -113,6 +113,14 @@ EmitSignal(SignalName.OnTransferFailed, reason);
         GD.PrintErr("[PetLocationManager] Transfer failed: ", reason);
         EmitSignal(SignalName.OnTransferFailed, reason);
     }
+
+    public void CancelTransfer()
+    {
+        StopTransitTimeout();
+        _transferState = PetTransferState.None;
+        _transferId = string.Empty;
+        GD.Print("[PetLocationManager] Transfer cancelled");
+    }
 public bool CanInteract()
 {
 return !IsTransferring;

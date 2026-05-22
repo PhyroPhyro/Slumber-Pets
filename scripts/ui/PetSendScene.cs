@@ -41,6 +41,15 @@ public partial class PetSendScene : Control
         GD.Print("[PetSendScene] Initialized");
     }
 
+    public override void _ExitTree()
+    {
+        _transferManager.OnTransferStarted -= OnTransferStarted;
+        _transferManager.OnTransferCompleted -= OnTransferCompleted;
+        _transferManager.OnTransferFailed -= OnTransferFailed;
+        _transferManager.OnTransferProgress -= OnTransferProgress;
+        _authManager.OnSessionRestored -= OnSessionRestored;
+    }
+
     public override void _Process(double delta)
     {
         if (_loadingIcon != null && _loadingIcon.Visible)

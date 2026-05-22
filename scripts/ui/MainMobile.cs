@@ -62,6 +62,21 @@ public partial class MainMobile : Control
         UpdateFirebaseStatus();
     }
 
+    public override void _ExitTree()
+    {
+        if (_petLocationManager != null)
+            _petLocationManager.OnLocationChanged -= OnPetLocationChanged;
+        if (_authManager != null)
+        {
+            _authManager.OnSessionRestored -= OnSessionRestored;
+            _authManager.OnLoginSuccess -= OnAuthChanged;
+            _authManager.OnLogout -= OnAuthChanged;
+            _authManager.OnTokenRefreshed -= OnAuthChanged;
+        }
+        if (_spriteAnimator != null)
+            _spriteAnimator.OnStateChanged -= OnPetStateChanged;
+    }
+
     private void UpdateUI()
     {
         PetLocation location = _petLocationManager.CurrentLocation;

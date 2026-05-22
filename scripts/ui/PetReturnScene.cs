@@ -22,6 +22,7 @@ public partial class PetReturnScene : Control
         _transferManager.OnTransferStarted += OnTransferStarted;
         _transferManager.OnTransferCompleted += OnTransferCompleted;
         _transferManager.OnTransferFailed += OnTransferFailed;
+        _transferManager.OnTransferProgress += OnTransferProgress;
         _authManager.OnSessionRestored += OnSessionRestored;
 
         var cancelButton = GetNode<Button>("VBox/CancelButton");
@@ -38,6 +39,15 @@ public partial class PetReturnScene : Control
         UpdateAuthUI();
 
         GD.Print("[PetReturnScene] Initialized");
+    }
+
+    public override void _ExitTree()
+    {
+        _transferManager.OnTransferStarted -= OnTransferStarted;
+        _transferManager.OnTransferCompleted -= OnTransferCompleted;
+        _transferManager.OnTransferFailed -= OnTransferFailed;
+        _transferManager.OnTransferProgress -= OnTransferProgress;
+        _authManager.OnSessionRestored -= OnSessionRestored;
     }
 
     public override void _Process(double delta)
