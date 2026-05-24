@@ -300,6 +300,7 @@ public class WalkReportData
 public string Date { get; set; } = string.Empty;
 public int Steps { get; set; } = 0;
 public int MilestonesReached { get; set; } = 0;
+public int DurationMin { get; set; } = 0;
 public System.Collections.Generic.List<ItemData> ItemsFound { get; set; } = new();
 }
 

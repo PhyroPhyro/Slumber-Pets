@@ -6,11 +6,12 @@ public partial class WalkTracker : Node
 [Signal] public delegate void OnWalkStartedEventHandler();
 [Signal] public delegate void OnWalkEndedEventHandler(Variant report);
 [Signal] public delegate void OnItemFoundEventHandler(Variant item);
-private StepCounter _stepCounter;
-private MilestoneManager _milestoneManager;
-private ItemRoller _itemRoller;
-private bool _isWalking = false;
-private List<ItemDrop> _itemsFound = new();
+    private StepCounter _stepCounter;
+    private MilestoneManager _milestoneManager;
+    private ItemRoller _itemRoller;
+    private bool _isWalking = false;
+    private DateTime _walkStartTime;
+    private List<ItemDrop> _itemsFound = new();
 public bool IsWalking => _isWalking;
 public int CurrentSteps => _stepCounter.StepsToday;
 public override void _Ready()
@@ -22,36 +23,40 @@ _stepCounter.OnStepDetected += OnStepDetected;
 _stepCounter.OnMilestoneStep += OnMilestoneStep;
 _milestoneManager.OnMilestoneReached += OnMilestoneReached;
 }
-public void StartWalk()
-{
-if (_isWalking) return;
-_isWalking = true;
-_itemsFound.Clear();
-_stepCounter.StartCounting();
-EmitSignal(SignalName.OnWalkStarted);
-GD.Print("[WalkTracker] Walk mode started");
-}
-public void EndWalk()
-{
-if (!_isWalking) return;
-_isWalking = false;
-_stepCounter.StopCounting();
-int steps = _stepCounter.StepsToday;
-int milestonesReached = _milestoneManager.MilestonesReachedToday;
-var report = new WalkReportData
-{
-Date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
-Steps = steps,
-MilestonesReached = milestonesReached,
-ItemsFound = new List<ItemData>()
-};
-foreach (var item in _itemsFound)
-{
-report.ItemsFound.Add(new ItemData { Id = item.Id, Qty = 1 });
-}
-EmitSignal(SignalName.OnWalkEnded, JsonSerialization.ToJson(report));
-GD.Print("[WalkTracker] Walk ended. Steps: ", steps, ", Items: ", _itemsFound.Count);
-}
+    public void StartWalk()
+    {
+        if (_isWalking) return;
+        _isWalking = true;
+        _walkStartTime = DateTime.UtcNow;
+        _itemsFound.Clear();
+        _stepCounter.StartCounting();
+        EmitSignal(SignalName.OnWalkStarted);
+        GD.Print("[WalkTracker] Walk mode started");
+    }
+    public void EndWalk()
+    {
+        if (!_isWalking) return;
+        _isWalking = false;
+        _stepCounter.StopCounting();
+        int steps = _stepCounter.StepsToday;
+        int milestonesReached = _milestoneManager.MilestonesReachedToday;
+        int durationMin = (int)(DateTime.UtcNow - _walkStartTime).TotalMinutes;
+
+        var report = new WalkReportData
+        {
+            Date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            Steps = steps,
+            MilestonesReached = milestonesReached,
+            DurationMin = durationMin,
+            ItemsFound = new List<ItemData>()
+        };
+        foreach (var item in _itemsFound)
+        {
+            report.ItemsFound.Add(new ItemData { Id = item.Id, Qty = 1 });
+        }
+        EmitSignal(SignalName.OnWalkEnded, JsonSerialization.ToJson(report));
+        GD.Print("[WalkTracker] Walk ended. Steps: ", steps, ", Duration: ", durationMin, "min, Items: ", _itemsFound.Count);
+    }
 private void OnStepDetected(int totalSteps)
 {
 GD.Print("[WalkTracker] Step detected: ", totalSteps);

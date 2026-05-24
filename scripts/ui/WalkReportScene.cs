@@ -8,9 +8,11 @@ public partial class WalkReportScene : Control
 
     private Label _stepsLabel;
     private Label _milestonesLabel;
+    private Label _durationLabel;
     private VBoxContainer _itemsList;
     private Label _noItemsLabel;
     private Button _returnButton;
+    private ItemsData _itemsCache;
 
     public static void SetPendingReport(WalkReportData report)
     {
@@ -21,11 +23,14 @@ public partial class WalkReportScene : Control
     {
         _stepsLabel = GetNode<Label>("VBox/Summary/StepsLabel");
         _milestonesLabel = GetNode<Label>("VBox/Summary/MilestonesLabel");
+        _durationLabel = GetNodeOrNull<Label>("VBox/Summary/DurationLabel");
         _itemsList = GetNode<VBoxContainer>("VBox/ItemsList");
         _noItemsLabel = GetNode<Label>("VBox/NoItemsLabel");
         _returnButton = GetNode<Button>("VBox/ReturnButton");
 
         _returnButton.Pressed += OnReturnPressed;
+
+        CacheItems();
 
         if (_pendingReport == null)
         {
@@ -37,6 +42,8 @@ public partial class WalkReportScene : Control
         PopulateReport(_pendingReport);
         _pendingReport = null;
 
+        AnimateEntrance();
+
         GD.Print("[WalkReportScene] Report displayed");
     }
 
@@ -44,6 +51,18 @@ public partial class WalkReportScene : Control
     {
         _stepsLabel.Text = report.Steps + " passos";
         _milestonesLabel.Text = report.MilestonesReached + " marco(s) atingido(s)";
+
+        if (_durationLabel != null && report.DurationMin > 0)
+        {
+            int hours = report.DurationMin / 60;
+            int mins = report.DurationMin % 60;
+            _durationLabel.Text = hours > 0 ? $"{hours}h {mins}min de passeio" : $"{mins}min de passeio";
+            _durationLabel.Visible = true;
+        }
+        else if (_durationLabel != null)
+        {
+            _durationLabel.Visible = false;
+        }
 
         if (report.ItemsFound == null || report.ItemsFound.Count == 0)
         {
@@ -57,6 +76,7 @@ public partial class WalkReportScene : Control
 
             foreach (var itemData in report.ItemsFound)
             {
+                string itemName = GetItemName(itemData.Id);
                 string rarity = GetRarityLabel(itemData.Id);
                 Color rarityColor = GetRarityColor(rarity);
 
@@ -64,7 +84,7 @@ public partial class WalkReportScene : Control
                 hbox.AddThemeConstantOverride("separation", 4);
 
                 var nameLabel = new Label();
-                nameLabel.Text = itemData.Id;
+                nameLabel.Text = itemName;
                 nameLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 
                 var rarityLabel = new Label();
@@ -80,23 +100,36 @@ public partial class WalkReportScene : Control
         }
     }
 
-    private string GetRarityLabel(string itemId)
+    private void CacheItems()
     {
         string path = "res://data/items.json";
-        if (!FileAccess.FileExists(path)) return "";
+        if (!FileAccess.FileExists(path)) return;
 
         try
         {
             using FileAccess file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
-            var data = JsonSerialization.FromJson<ItemsData>(file.GetAsText());
-            if (data != null && data.Items != null)
-            {
-                var item = data.Items.Find(i => i.Id == itemId);
-                if (item != null) return FormatRarity(item.Rarity);
-            }
+            _itemsCache = JsonSerialization.FromJson<ItemsData>(file.GetAsText());
         }
         catch { }
+    }
 
+    private string GetItemName(string itemId)
+    {
+        if (_itemsCache?.Items != null)
+        {
+            var item = _itemsCache.Items.Find(i => i.Id == itemId);
+            if (item != null) return item.Name;
+        }
+        return itemId;
+    }
+
+    private string GetRarityLabel(string itemId)
+    {
+        if (_itemsCache?.Items != null)
+        {
+            var item = _itemsCache.Items.Find(i => i.Id == itemId);
+            if (item != null) return FormatRarity(item.Rarity);
+        }
         return "";
     }
 
@@ -133,5 +166,19 @@ public partial class WalkReportScene : Control
     private void OnReturnPressed()
     {
         GetTree().ChangeSceneToFile("res://scenes/main_mobile.tscn");
+    }
+
+    private void AnimateEntrance()
+    {
+        var vbox = GetNodeOrNull<VBoxContainer>("VBox");
+        if (vbox == null) return;
+
+        vbox.Modulate = new Color(1, 1, 1, 0);
+        vbox.Position = new Vector2(0, 30);
+
+        var tween = GetTree().CreateTween();
+        tween.SetParallel(true);
+        tween.TweenProperty(vbox, "modulate:a", 1.0f, 0.4f).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+        tween.TweenProperty(vbox, "position:y", 0f, 0.4f).SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
     }
 }
