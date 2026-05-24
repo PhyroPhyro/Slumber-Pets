@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Threading.Tasks;
 
 public partial class PetTransferManager : Node
 {
@@ -15,6 +16,8 @@ public partial class PetTransferManager : Node
     private bool _isTransferring = false;
     private Timer _timeoutTimer;
     private const float TimeoutSeconds = 15.0f;
+    private const int MaxRetries = 3;
+    private const float BaseBackoffSeconds = 2.0f;
 
     public bool IsTransferring => _isTransferring;
 
@@ -104,6 +107,11 @@ public partial class PetTransferManager : Node
 
     public async void TryReceivePet()
     {
+        await TryReceivePetWithRetry(0);
+    }
+
+    private async Task TryReceivePetWithRetry(int attempt)
+    {
         if (_isTransferring) return;
 
         if (!_authManager.IsAuthenticated)
@@ -138,9 +146,21 @@ public partial class PetTransferManager : Node
 
         if (status == RemotePetStatus.Error)
         {
+            if (attempt < MaxRetries)
+            {
+                float backoff = (float)(BaseBackoffSeconds * Math.Pow(2, attempt));
+                GD.Print("[PetTransferManager] Network error, retry in ", backoff, "s (attempt ", attempt + 1, "/", MaxRetries, ")");
+                EmitSignal(SignalName.OnTransferProgress, "Erro de conexão. Tentando novamente...", 0.3f);
+                StopTimeout();
+                await Task.Delay((int)(backoff * 1000));
+                _isTransferring = false;
+                await TryReceivePetWithRetry(attempt + 1);
+                return;
+            }
+
             _isTransferring = false;
             StopTimeout();
-            EmitSignal(SignalName.OnReceiveFailed, "Não foi possível conectar ao servidor. Verifique sua internet.");
+            EmitSignal(SignalName.OnReceiveFailed, "Não foi possível conectar ao servidor após várias tentativas. Verifique sua internet.");
             return;
         }
 
@@ -150,9 +170,21 @@ public partial class PetTransferManager : Node
 
         if (snapshot == null)
         {
+            if (attempt < MaxRetries)
+            {
+                float backoff = (float)(BaseBackoffSeconds * Math.Pow(2, attempt));
+                GD.Print("[PetTransferManager] Claim failed, retry in ", backoff, "s (attempt ", attempt + 1, "/", MaxRetries, ")");
+                EmitSignal(SignalName.OnTransferProgress, "Falha ao receber. Tentando novamente...", 0.6f);
+                StopTimeout();
+                await Task.Delay((int)(backoff * 1000));
+                _isTransferring = false;
+                await TryReceivePetWithRetry(attempt + 1);
+                return;
+            }
+
             _isTransferring = false;
             StopTimeout();
-            EmitSignal(SignalName.OnReceiveFailed, "Não foi possível receber o pet. Tente novamente.");
+            EmitSignal(SignalName.OnReceiveFailed, "Não foi possível receber o pet. Tente novamente mais tarde.");
             return;
         }
 

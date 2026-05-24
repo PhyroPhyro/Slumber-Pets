@@ -170,6 +170,7 @@ public partial class FirestoreService : Node
                     {
                         "available" => RemotePetStatus.Available,
                         "claimed" => RemotePetStatus.Claimed,
+                        "in_transit" => RemotePetStatus.Claimed,
                         _ => RemotePetStatus.None
                     };
                 }
@@ -227,9 +228,23 @@ public partial class FirestoreService : Node
             if (doc?.Fields == null)
                 return null;
 
-            if (!doc.Fields.TryGetValue("Status", out var statusVal) || statusVal.StringValue != "available")
+            if (!doc.Fields.TryGetValue("Status", out var statusVal))
             {
-                GD.Print("[FirestoreService] Pet not available for claim (status=", statusVal?.StringValue ?? "null", ")");
+                GD.Print("[FirestoreService] No status field found");
+                return null;
+            }
+
+            string status = statusVal.StringValue ?? "";
+
+            if (status == "claimed" || status == "in_transit")
+            {
+                GD.Print("[FirestoreService] Pet not available for claim (status=", status, ")");
+                return null;
+            }
+
+            if (status != "available")
+            {
+                GD.Print("[FirestoreService] Unexpected status: ", status);
                 return null;
             }
 
@@ -237,40 +252,19 @@ public partial class FirestoreService : Node
             if (snapshot == null)
                 return null;
 
-            var claimDoc = new FirestoreDocument
+            bool claimed = await TryAtomicClaimAsync(userId, token);
+            if (!claimed)
             {
-                Fields = new FirestoreFields
-                {
-                    { "Status", new FirestoreValue { StringValue = "claimed" } },
-                    { "ClaimedBy", new FirestoreValue { StringValue = userId } },
-                    { "ClaimedAt", new FirestoreValue { StringValue = DateTime.UtcNow.ToString("o") } }
-                }
-            };
-
-            string claimJson = JsonSerializer.Serialize(claimDoc);
-            var claimContent = new StringContent(claimJson, Encoding.UTF8, "application/json");
-
-            var claimRequest = new HttpRequestMessage(new HttpMethod("PATCH"), url)
-            {
-                Content = claimContent
-            };
-            claimRequest.Headers.Add("Authorization", $"Bearer {token}");
-
-            HttpResponseMessage claimResponse = await _httpClient.SendAsync(claimRequest);
-
-            if (claimResponse.IsSuccessStatusCode)
-            {
-                GD.Print("[FirestoreService] Pet claimed successfully: transferId=", snapshot.TransferId);
-                SetConnectionStatus(true);
-                return snapshot;
-            }
-            else
-            {
-                string claimBody = await claimResponse.Content.ReadAsStringAsync();
-                GD.PrintErr("[FirestoreService] Claim write failed: ", claimResponse.StatusCode, " ", claimBody);
-                SetConnectionStatus(false);
+                GD.Print("[FirestoreService] Atomic claim failed (race condition detected)");
                 return null;
             }
+
+            GD.Print("[FirestoreService] Pet claimed successfully: transferId=", snapshot.TransferId);
+            SetConnectionStatus(true);
+
+            await ClearSnapshotAsync();
+
+            return snapshot;
         }
         catch (Exception e)
         {
@@ -278,6 +272,114 @@ public partial class FirestoreService : Node
             SetConnectionStatus(false);
             return null;
         }
+    }
+
+    private async Task<bool> TryAtomicClaimAsync(string userId, string token)
+    {
+        string baseUrl = $"https://firestore.googleapis.com/v1/projects/{FirebaseConfig.ProjectId}/databases/(default)/documents";
+        string docPath = $"users/{userId}";
+
+        string transactionUrl = $"{baseUrl}:beginTransaction";
+        var beginRequest = new HttpRequestMessage(HttpMethod.Post, transactionUrl);
+        beginRequest.Headers.Add("Authorization", $"Bearer {token}");
+        beginRequest.Content = new StringContent("{\"options\":{}}", Encoding.UTF8, "application/json");
+
+        HttpResponseMessage beginResponse = await _httpClient.SendAsync(beginRequest);
+        if (!beginResponse.IsSuccessStatusCode)
+        {
+            GD.PrintErr("[FirestoreService] Failed to begin transaction");
+            return false;
+        }
+
+        string beginBody = await beginResponse.Content.ReadAsStringAsync();
+        var beginResult = JsonSerializer.Deserialize<TransactionBeginResponse>(beginBody);
+        string transactionId = beginResult?.Transaction;
+
+        if (string.IsNullOrEmpty(transactionId))
+        {
+            GD.PrintErr("[FirestoreService] No transaction ID returned");
+            return false;
+        }
+
+        string readDocUrl = $"{baseUrl}/{docPath}";
+        var readRequest = new HttpRequestMessage(HttpMethod.Get, readDocUrl);
+        readRequest.Headers.Add("Authorization", $"Bearer {token}");
+        HttpResponseMessage readResponse = await _httpClient.SendAsync(readRequest);
+
+        if (!readResponse.IsSuccessStatusCode)
+        {
+            GD.PrintErr("[FirestoreService] Transaction read failed");
+            return false;
+        }
+
+        string readBody = await readResponse.Content.ReadAsStringAsync();
+        var readDoc = JsonSerializer.Deserialize<FirestoreDocument>(readBody);
+
+        if (readDoc?.Fields == null || !readDoc.Fields.TryGetValue("Status", out var statusVal))
+            return false;
+
+        if (statusVal.StringValue != "available")
+        {
+            GD.Print("[FirestoreService] Transaction aborted: status changed to ", statusVal.StringValue);
+            return false;
+        }
+
+        string commitUrl = $"{baseUrl}:commit";
+        var commitDoc = new FirestoreDocument
+        {
+            Fields = new FirestoreFields
+            {
+                { "Status", new FirestoreValue { StringValue = "claimed" } },
+                { "ClaimedBy", new FirestoreValue { StringValue = userId } },
+                { "ClaimedAt", new FirestoreValue { StringValue = DateTime.UtcNow.ToString("o") } }
+            }
+        };
+
+        string currentRevision = ExtractRevision(readBody);
+
+        var commitPayload = new
+        {
+            transaction = transactionId,
+            writes = new object[]
+            {
+                new
+                {
+                    update = commitDoc,
+                    currentDocument = new { exists = true, updateTime = currentRevision }
+                }
+            }
+        };
+
+        string commitJson = JsonSerializer.Serialize(commitPayload);
+        var commitRequest = new HttpRequestMessage(HttpMethod.Post, commitUrl);
+        commitRequest.Headers.Add("Authorization", $"Bearer {token}");
+        commitRequest.Content = new StringContent(commitJson, Encoding.UTF8, "application/json");
+
+        HttpResponseMessage commitResponse = await _httpClient.SendAsync(commitRequest);
+
+        if (commitResponse.IsSuccessStatusCode)
+        {
+            GD.Print("[FirestoreService] Atomic claim committed successfully");
+            return true;
+        }
+        else
+        {
+            string errBody = await commitResponse.Content.ReadAsStringAsync();
+            GD.PrintErr("[FirestoreService] Atomic claim failed: ", commitResponse.StatusCode, " ", errBody);
+            return false;
+        }
+    }
+
+    private string ExtractRevision(string documentJson)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(documentJson);
+            if (doc.RootElement.TryGetProperty("updateTime", out var updateTime))
+                return updateTime.GetString();
+        }
+        catch { }
+        return "";
     }
 
     public async Task ClearSnapshotAsync()
@@ -456,4 +558,10 @@ public class FirestoreArray
 {
     [System.Text.Json.Serialization.JsonPropertyName("values")]
     public System.Collections.Generic.List<FirestoreValue> Values { get; set; } = new();
+}
+
+public class TransactionBeginResponse
+{
+    [System.Text.Json.Serialization.JsonPropertyName("transaction")]
+    public string Transaction { get; set; }
 }
