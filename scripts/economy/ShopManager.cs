@@ -91,15 +91,23 @@ public int HappinessRestore { get; set; } = 0;
 }
 public class ItemsData
 {
-public List<ItemEntry> Items { get; set; } = new();
+    [System.Text.Json.Serialization.JsonPropertyName("items")]
+    public List<ItemEntry> Items { get; set; } = new();
 }
 public class ItemEntry
 {
-public string Id { get; set; } = string.Empty;
-public string Name { get; set; } = string.Empty;
-public string Rarity { get; set; } = string.Empty;
-public string Type { get; set; } = string.Empty;
-public int HungerRestore { get; set; } = 0;
-public int HappinessRestore { get; set; } = 0;
-public int ShopPrice { get; set; } = 0;
+    [System.Text.Json.Serialization.JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("rarity")]
+    public string Rarity { get; set; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+    [System.Text.Json.Serialization.JsonPropertyName("hungerRestore")]
+    public int HungerRestore { get; set; } = 0;
+    [System.Text.Json.Serialization.JsonPropertyName("happinessRestore")]
+    public int HappinessRestore { get; set; } = 0;
+    [System.Text.Json.Serialization.JsonPropertyName("shopPrice")]
+    public int ShopPrice { get; set; } = 0;
 }
