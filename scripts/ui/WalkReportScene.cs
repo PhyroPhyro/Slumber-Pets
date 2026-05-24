@@ -24,7 +24,7 @@ public partial class WalkReportScene : Control
         _stepsLabel = GetNode<Label>("VBox/Summary/StepsLabel");
         _milestonesLabel = GetNode<Label>("VBox/Summary/MilestonesLabel");
         _durationLabel = GetNodeOrNull<Label>("VBox/Summary/DurationLabel");
-        _itemsList = GetNode<VBoxContainer>("VBox/ItemsList");
+        _itemsList = GetNode<VBoxContainer>("VBox/ItemsListScroll/ItemsList");
         _noItemsLabel = GetNode<Label>("VBox/NoItemsLabel");
         _returnButton = GetNode<Button>("VBox/ReturnButton");
 

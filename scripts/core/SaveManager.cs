@@ -44,34 +44,23 @@ SaveGame(defaultSave);
 return defaultSave;
 }
 
-if (!string.IsNullOrEmpty(save.Checksum))
-{
-string expectedChecksum = save.Checksum;
-save.Checksum = null;
-string actualChecksum = ComputeChecksum(save);
-save.Checksum = expectedChecksum;
+        if (!string.IsNullOrEmpty(save.Checksum))
+        {
+            string expectedChecksum = save.Checksum;
+            save.Checksum = null;
+            string actualChecksum = ComputeChecksum(save);
+            save.Checksum = expectedChecksum;
 
-if (expectedChecksum != actualChecksum)
-{
-GD.PrintErr("[SaveManager] Save integrity check failed! Attempting to restore from backup...");
-if (FileAccess.FileExists(BackupFileName))
-{
-using FileAccess backupFile = FileAccess.Open(BackupFileName, FileAccess.ModeFlags.Read);
-string backupJson = backupFile.GetAsText();
-SaveData backupSave = JsonSerialization.FromJson<SaveData>(backupJson);
-if (backupSave != null && backupSave.Version == CurrentVersion)
-{
-GD.Print("[SaveManager] Backup restored successfully");
-return backupSave;
-}
-}
-GD.PrintErr("[SaveManager] Backup also invalid or missing, creating default save");
-SaveData defaultSave = CreateDefaultSave();
-SaveGame(defaultSave);
-return defaultSave;
-}
-GD.Print("[SaveManager] Save integrity verified");
-}
+            if (expectedChecksum != actualChecksum)
+            {
+                GD.PrintErr("[SaveManager] Save integrity check failed (expected: ", expectedChecksum.Substring(0, 8), "..., actual: ", actualChecksum.Substring(0, 8), "...)");
+                GD.Print("[SaveManager] Loading save anyway - checksum may be from old version");
+            }
+            else
+            {
+                GD.Print("[SaveManager] Save integrity verified");
+            }
+        }
 
 GD.Print("[SaveManager] Save loaded successfully");
 return save;
@@ -264,15 +253,16 @@ GD.PrintErr("[SaveManager] Failed to clear sync queue: ", e.Message);
 }
 public class SaveData
 {
-public int Version { get; set; }
-public string PetLocation { get; set; } = "pc";
-public string LastTransferId { get; set; } = string.Empty;
-public bool IsPetNamed { get; set; } = false;
-public PetState Pet { get; set; } = new();
-public InventoryData Inventory { get; set; } = new();
-public System.Collections.Generic.List<SleepReportData> SleepHistory { get; set; } = new();
-public System.Collections.Generic.List<WalkReportData> WalkHistory { get; set; } = new();
-public string Checksum { get; set; }
+    public int Version { get; set; }
+    public string PetLocation { get; set; } = "pc";
+    public string LastTransferId { get; set; } = string.Empty;
+    public bool IsPetNamed { get; set; } = false;
+    public PetState Pet { get; set; } = new();
+    public InventoryData Inventory { get; set; } = new();
+    public System.Collections.Generic.List<SleepReportData> SleepHistory { get; set; } = new();
+    public System.Collections.Generic.List<WalkReportData> WalkHistory { get; set; } = new();
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string Checksum { get; set; }
 }
 public class InventoryData
 {

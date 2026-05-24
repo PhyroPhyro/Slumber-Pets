@@ -25,20 +25,26 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="TitleSpacer" type="Control" parent="VBox"]
 layout_mode = 2
 
 [node name="TitleLabel" type="Label" parent="VBox"]
 layout_mode = 2
-text = "Escolha um nome especial para seu companheiro"
+theme_override_font_sizes/font_size = 9
+text = "Escolha um nome para seu pet"
 horizontal_alignment = 1
+clip_text = true
 
 [node name="PetIconSpacer" type="Control" parent="VBox"]
-custom_minimum_size = Vector2(0, 12)
+custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_vertical = 0
 
@@ -46,7 +52,8 @@ size_flags_vertical = 0
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_vertical = 0
-text = "🐾"
+theme_override_font_sizes/font_size = 10
+text = "Pet"
 horizontal_alignment = 1
 
 [node name="NameEdit" type="LineEdit" parent="VBox"]
@@ -59,9 +66,12 @@ visible = false
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_vertical = 0
+theme_override_font_sizes/font_size = 8
 horizontal_alignment = 1
 
 [node name="ConfirmButton" type="Button" parent="VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-text = "Confirmar Nome"
+theme_override_font_sizes/font_size = 10
+text = "Confirmar"
+clip_text = true

@@ -25,22 +25,32 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 10
 text = "Conta Firebase"
 horizontal_alignment = 1
 
 [node name="StatusLabel" type="Label" parent="VBox"]
 layout_mode = 2
-text = "Não conectado"
+clip_text = true
+theme_override_font_sizes/font_size = 9
+text = "Nao conectado"
 horizontal_alignment = 1
 
 [node name="EmailLabel" type="Label" parent="VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 9
 horizontal_alignment = 1
 
 [node name="EmailEdit" type="LineEdit" parent="VBox"]
@@ -54,15 +64,21 @@ secret = true
 
 [node name="LoginButton" type="Button" parent="VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 10
 text = "Entrar"
 
 [node name="RegisterButton" type="Button" parent="VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 10
 text = "Criar Conta"
 
 [node name="LogoutButton" type="Button" parent="VBox"]
 visible = false
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 10
 text = "Sair"
 
 [node name="Spacer" type="Control" parent="VBox"]
@@ -71,4 +87,6 @@ size_flags_vertical = 3
 
 [node name="CancelButton" type="Button" parent="VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 10
 text = "Voltar"

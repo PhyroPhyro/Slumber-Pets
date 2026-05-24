@@ -25,23 +25,32 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 10
 text = "Slumber Pets"
 horizontal_alignment = 1
 
 [node name="FirebaseStatusLabel" type="Label" parent="VBox"]
 layout_mode = 2
 tooltip_text = "Firebase: Desconectado"
+theme_override_font_sizes/font_size = 10
 text = "●"
 horizontal_alignment = 1
 
 [node name="StatusLabel" type="Label" parent="VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 9
 text = "Carregando..."
 horizontal_alignment = 1
 
@@ -57,20 +66,27 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
+theme_override_constants/separation = 4
 
 [node name="MessageLabel" type="Label" parent="VBox/PetAtHome/Container"]
 layout_mode = 2
-text = "Seu pet está esperando por você no PC!"
+clip_text = true
+theme_override_font_sizes/font_size = 9
+text = "Pet esperando no PC!"
 horizontal_alignment = 1
 
 [node name="SubLabel" type="Label" parent="VBox/PetAtHome/Container"]
 layout_mode = 2
-text = "Abra o jogo no PC e envie o pet para cá."
+clip_text = true
+theme_override_font_sizes/font_size = 8
+text = "Abra no PC e envie para ca."
 horizontal_alignment = 1
 
 [node name="ReceivePetButton" type="Button" parent="VBox/PetAtHome/Container"]
 layout_mode = 2
-text = "Receber Pet do PC"
+clip_text = true
+theme_override_font_sizes/font_size = 9
+text = "Receber Pet"
 
 [node name="PetWithMe" type="Control" parent="VBox"]
 layout_mode = 2
@@ -84,6 +100,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
+theme_override_constants/separation = 4
 
 [node name="PetPlaceholder" type="ColorRect" parent="VBox/PetWithMe/Container"]
 custom_minimum_size = Vector2(32, 32)
@@ -92,25 +109,35 @@ color = Color(0.6, 0.6, 0.8, 1)
 
 [node name="PetStateLabel" type="Label" parent="VBox/PetWithMe/Container"]
 layout_mode = 2
+clip_text = true
 theme_override_font_sizes/font_size = 8
 text = "Tranquilo"
 horizontal_alignment = 1
 
 [node name="Buttons" type="VBoxContainer" parent="VBox/PetWithMe/Container"]
 layout_mode = 2
+theme_override_constants/separation = 2
 
 [node name="SleepButton" type="Button" parent="VBox/PetWithMe/Container/Buttons"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 9
 text = "Modo Sono"
 
 [node name="WalkButton" type="Button" parent="VBox/PetWithMe/Container/Buttons"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 9
 text = "Modo Passeio"
 
 [node name="ReturnButton" type="Button" parent="VBox/PetWithMe/Container/Buttons"]
 layout_mode = 2
-text = "Voltar para Casa (PC)"
+clip_text = true
+theme_override_font_sizes/font_size = 9
+text = "Voltar p/ PC"
 
 [node name="ToolsButton" type="Button" parent="VBox/PetWithMe/Container/Buttons"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 9
 text = "Tools"

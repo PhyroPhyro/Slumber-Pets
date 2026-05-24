@@ -108,8 +108,8 @@ public partial class PlayModeScene : Control
         float targetWidth = _targetButton.Size.X;
         float targetHeight = _targetButton.Size.Y;
 
-        float x = _rng.RandfRange(0, areaWidth - targetWidth);
-        float y = _rng.RandfRange(0, areaHeight - targetHeight);
+        float x = _rng.RandfRange(0, Mathf.Max(0, areaWidth - targetWidth));
+        float y = _rng.RandfRange(0, Mathf.Max(0, areaHeight - targetHeight));
 
         _targetButton.Position = new Vector2(x, y);
 

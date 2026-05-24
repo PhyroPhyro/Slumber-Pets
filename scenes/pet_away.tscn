@@ -22,16 +22,25 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 4
+alignment = 1
 
 [node name="TitleLabel" type="Label" parent="VBox"]
 layout_mode = 2
-text = "Seu pet está em casa"
+clip_text = true
+theme_override_font_sizes/font_size = 10
+text = "Pet em Casa"
 horizontal_alignment = 1
 
 [node name="DescriptionLabel" type="Label" parent="VBox"]
 layout_mode = 2
-text = "Aguarde o retorno do pet para interagir."
+clip_text = true
+theme_override_font_sizes/font_size = 9
+text = "Aguarde o retorno do pet."
 horizontal_alignment = 1

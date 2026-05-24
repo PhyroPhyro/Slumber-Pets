@@ -12,7 +12,7 @@ private Dictionary<string, Button> _itemButtons = new();
 
 public override void _Ready()
 {
-_itemList = GetNode<VBoxContainer>("MarginContainer/VBox/ItemList");
+        _itemList = GetNode<VBoxContainer>("MarginContainer/VBox/ItemListScroll/ItemList");
 _coinsLabel = GetNode<Label>("MarginContainer/VBox/Header/CoinsLabel");
 _feedbackLabel = GetNode<Label>("MarginContainer/VBox/FeedbackLabel");
 _feedbackLabel.Text = "";
@@ -39,43 +39,44 @@ if (_shopManager != null)
 _shopManager.OnItemPurchased -= OnItemPurchased;
 }
 
-private void AddShopItem(ShopItem item)
-{
-var hBox = new HBoxContainer();
-hBox.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+    private void AddShopItem(ShopItem item)
+    {
+        var hBox = new HBoxContainer();
+        hBox.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 
-var button = new Button();
-button.Text = $"{item.Name}";
-button.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-button.Pressed += () => OnItemPressed(item.Id);
-hBox.AddChild(button);
+        var button = new Button();
+        button.Text = $"{item.Name}";
+        button.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        button.ClipText = true;
+        button.Pressed += () => OnItemPressed(item.Id);
+        hBox.AddChild(button);
 
-var priceLabel = new Label();
-priceLabel.Text = $"{item.Price}";
-priceLabel.SizeFlagsHorizontal = 0;
-priceLabel.HorizontalAlignment = HorizontalAlignment.Right;
-priceLabel.CustomMinimumSize = new Vector2(60, 0);
-hBox.AddChild(priceLabel);
+        var priceLabel = new Label();
+        priceLabel.Text = $"{item.Price}";
+        priceLabel.SizeFlagsHorizontal = 0;
+        priceLabel.HorizontalAlignment = HorizontalAlignment.Right;
+        priceLabel.CustomMinimumSize = new Vector2(40, 0);
+        hBox.AddChild(priceLabel);
 
-var descLabel = new Label();
-string desc = "";
-if (item.HungerRestore > 0) desc += $"Fome +{item.HungerRestore}";
-if (item.HappinessRestore > 0)
-{
-if (desc.Length > 0) desc += " | ";
-desc += $"Feliz +{item.HappinessRestore}";
-}
-descLabel.Text = desc;
-descLabel.SizeFlagsHorizontal = 0;
-descLabel.HorizontalAlignment = HorizontalAlignment.Right;
-descLabel.CustomMinimumSize = new Vector2(100, 0);
-descLabel.AddThemeColorOverride("font_color", new Color(0.7f, 0.7f, 0.7f));
-hBox.AddChild(descLabel);
+        var descLabel = new Label();
+        string desc = "";
+        if (item.HungerRestore > 0) desc += $"F+{item.HungerRestore}";
+        if (item.HappinessRestore > 0)
+        {
+            if (desc.Length > 0) desc += " | ";
+            desc += $"Fel+{item.HappinessRestore}";
+        }
+        descLabel.Text = desc;
+        descLabel.SizeFlagsHorizontal = 0;
+        descLabel.HorizontalAlignment = HorizontalAlignment.Right;
+        descLabel.CustomMinimumSize = new Vector2(60, 0);
+        descLabel.AddThemeColorOverride("font_color", new Color(0.7f, 0.7f, 0.7f));
+        hBox.AddChild(descLabel);
 
-_itemList.AddChild(hBox);
-_itemButtons[item.Id] = button;
-UpdateButtonState(item.Id);
-}
+        _itemList.AddChild(hBox);
+        _itemButtons[item.Id] = button;
+        UpdateButtonState(item.Id);
+    }
 
 private void UpdateButtonState(string itemId)
 {

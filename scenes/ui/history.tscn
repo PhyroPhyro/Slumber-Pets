@@ -27,27 +27,36 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 8
+theme_override_constants/margin_left = 4
 theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 8
+theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
 [node name="VBox" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
+theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="MarginContainer/VBox"]
 layout_mode = 2
-text = "Histórico"
+clip_text = true
+theme_override_font_sizes/font_size = 10
+text = "Historico"
 horizontal_alignment = 1
 
 [node name="SleepHistoryLabel" type="Label" parent="MarginContainer/VBox"]
 layout_mode = 2
-text = "Sono:"
+clip_text = true
+theme_override_font_sizes/font_size = 9
+text = "Sono: 0 relatorios"
 
 [node name="WalkHistoryLabel" type="Label" parent="MarginContainer/VBox"]
 layout_mode = 2
-text = "Caminhada:"
+clip_text = true
+theme_override_font_sizes/font_size = 9
+text = "Caminhada: 0 relatorios"
 
 [node name="BackButton" type="Button" parent="MarginContainer/VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 10
 text = "Voltar"

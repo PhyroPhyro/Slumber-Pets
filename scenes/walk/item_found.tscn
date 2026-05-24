@@ -5,12 +5,16 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0, 0, 0, 0.7)
 
 [node name="VBox" type="VBoxContainer" parent="."]
@@ -18,20 +22,33 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_constants/separation = 4
+alignment = 1
 
 [node name="TitleLabel" type="Label" parent="VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 10
 text = "Item Encontrado!"
 horizontal_alignment = 1
 
 [node name="ItemNameLabel" type="Label" parent="VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 9
 text = "Nome do Item"
 horizontal_alignment = 1
 
 [node name="RarityLabel" type="Label" parent="VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 9
 text = "Raridade"
 horizontal_alignment = 1
 
@@ -41,4 +58,6 @@ size_flags_vertical = 3
 
 [node name="OkButton" type="Button" parent="VBox"]
 layout_mode = 2
+clip_text = true
+theme_override_font_sizes/font_size = 10
 text = "OK"

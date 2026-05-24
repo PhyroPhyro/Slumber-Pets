@@ -13,7 +13,7 @@ private PetNeeds _petNeeds;
 
 public override void _Ready()
 {
-_itemList = GetNode<VBoxContainer>("MarginContainer/VBox/ItemList");
+        _itemList = GetNode<VBoxContainer>("MarginContainer/VBox/ItemListScroll/ItemList");
 _coinsLabel = GetNode<Label>("MarginContainer/VBox/Header/CoinsLabel");
 _feedbackLabel = GetNode<Label>("MarginContainer/VBox/FeedbackLabel");
 _feedbackLabel.Text = "";
@@ -54,52 +54,53 @@ AddItem(kvp.Key, kvp.Value);
 }
 }
 
-private void AddItem(string itemId, int qty)
-{
-if (qty <= 0) return;
+    private void AddItem(string itemId, int qty)
+    {
+        if (qty <= 0) return;
 
-var shopItem = _shopManager.GetItem(itemId);
-string displayName = shopItem != null ? shopItem.Name : itemId;
+        var shopItem = _shopManager.GetItem(itemId);
+        string displayName = shopItem != null ? shopItem.Name : itemId;
 
-var hBox = new HBoxContainer();
-hBox.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        var hBox = new HBoxContainer();
+        hBox.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 
-var nameLabel = new Label();
-nameLabel.Text = displayName;
-nameLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-hBox.AddChild(nameLabel);
+        var nameLabel = new Label();
+        nameLabel.Text = displayName;
+        nameLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        nameLabel.ClipText = true;
+        hBox.AddChild(nameLabel);
 
-var qtyLabel = new Label();
-qtyLabel.Text = $"x{qty}";
-qtyLabel.CustomMinimumSize = new Vector2(40, 0);
-qtyLabel.HorizontalAlignment = HorizontalAlignment.Center;
-hBox.AddChild(qtyLabel);
+        var qtyLabel = new Label();
+        qtyLabel.Text = $"x{qty}";
+        qtyLabel.CustomMinimumSize = new Vector2(30, 0);
+        qtyLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        hBox.AddChild(qtyLabel);
 
-string desc = "";
-if (shopItem != null)
-{
-if (shopItem.HungerRestore > 0) desc += $"Fome +{shopItem.HungerRestore}";
-if (shopItem.HappinessRestore > 0)
-{
-if (desc.Length > 0) desc += " | ";
-desc += $"Feliz +{shopItem.HappinessRestore}";
-}
-}
-var descLabel = new Label();
-descLabel.Text = desc;
-descLabel.CustomMinimumSize = new Vector2(100, 0);
-descLabel.HorizontalAlignment = HorizontalAlignment.Right;
-descLabel.AddThemeColorOverride("font_color", new Color(0.7f, 0.7f, 0.7f));
-hBox.AddChild(descLabel);
+        string desc = "";
+        if (shopItem != null)
+        {
+            if (shopItem.HungerRestore > 0) desc += $"F+{shopItem.HungerRestore}";
+            if (shopItem.HappinessRestore > 0)
+            {
+                if (desc.Length > 0) desc += " | ";
+                desc += $"Fel+{shopItem.HappinessRestore}";
+            }
+        }
+        var descLabel = new Label();
+        descLabel.Text = desc;
+        descLabel.CustomMinimumSize = new Vector2(50, 0);
+        descLabel.HorizontalAlignment = HorizontalAlignment.Right;
+        descLabel.AddThemeColorOverride("font_color", new Color(0.7f, 0.7f, 0.7f));
+        hBox.AddChild(descLabel);
 
-var useButton = new Button();
-useButton.Text = "Usar";
-useButton.CustomMinimumSize = new Vector2(60, 0);
-useButton.Pressed += () => OnUseItemPressed(itemId);
-hBox.AddChild(useButton);
+        var useButton = new Button();
+        useButton.Text = "Usar";
+        useButton.CustomMinimumSize = new Vector2(45, 0);
+        useButton.Pressed += () => OnUseItemPressed(itemId);
+        hBox.AddChild(useButton);
 
-_itemList.AddChild(hBox);
-}
+        _itemList.AddChild(hBox);
+    }
 
 private void OnUseItemPressed(string itemId)
 {
@@ -138,11 +139,11 @@ _feedbackLabel.Text = "";
 };
 }
 
-private void UpdateCoins(int amount)
-{
-if (!IsInstanceValid(_coinsLabel)) return;
-_coinsLabel.Text = "Inventário - Moedas: " + amount;
-}
+    private void UpdateCoins(int amount)
+    {
+        if (!IsInstanceValid(_coinsLabel)) return;
+        _coinsLabel.Text = "Moedas: " + amount;
+    }
 
 private void OnBackPressed()
 {

@@ -28,9 +28,9 @@ public partial class MainDesktop : Node
 
     public override void _Ready()
     {
-        _hungerLabel = GetNode<Label>("HUD/Attributes/HungerLabel");
-        _happinessLabel = GetNode<Label>("HUD/Attributes/HappinessLabel");
-        _energyLabel = GetNode<Label>("HUD/Attributes/EnergyLabel");
+        _hungerLabel = GetNode<Label>("HUD/AttributesPanel/Attributes/HungerLabel");
+        _happinessLabel = GetNode<Label>("HUD/AttributesPanel/Attributes/HappinessLabel");
+        _energyLabel = GetNode<Label>("HUD/AttributesPanel/Attributes/EnergyLabel");
         _coinsLabel = GetNode<Label>("HUD/TopBar/CoinsLabel");
         _coinsPerMinLabel = GetNode<Label>("HUD/TopBar/CoinsPerMinLabel");
         _sessionCoinsLabel = GetNode<Label>("HUD/TopBar/SessionCoinsLabel");
