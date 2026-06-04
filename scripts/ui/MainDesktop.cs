@@ -47,7 +47,7 @@ public partial class MainDesktop : Node
         _toolsButton = GetNode<Button>("HUD/BottomBar/ToolsButton");
 
         _spriteAnimator = GetNode<PetSpriteAnimator>("/root/PetSpriteAnimator");
-        _spriteAnimator.SetPlaceholder(_petPlaceholder);
+        _spriteAnimator.SetAnimationMode(PetSpriteAnimator.AnimationMode.Texture);
         _spriteAnimator.OnStateChanged += OnPetStateChanged;
 
         _playButton.Pressed += OnPlayPressed;

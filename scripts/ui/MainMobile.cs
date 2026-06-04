@@ -29,6 +29,7 @@ public partial class MainMobile : Control
         _petLocationManager = GetNode<PetLocationManager>("/root/PetLocationManager");
         _authManager = GetNode<FirebaseAuthManager>("/root/FirebaseAuthManager");
         _spriteAnimator = GetNode<PetSpriteAnimator>("/root/PetSpriteAnimator");
+        _spriteAnimator.SetAnimationMode(PetSpriteAnimator.AnimationMode.Texture);
 
         _statusLabel = GetNode<Label>("VBox/StatusLabel");
         _firebaseStatusLabel = GetNode<Label>("VBox/FirebaseStatusLabel");
@@ -41,8 +42,6 @@ public partial class MainMobile : Control
         _walkButton = GetNode<Button>("VBox/PetWithMe/Container/Buttons/WalkButton");
         _returnButton = GetNode<Button>("VBox/PetWithMe/Container/Buttons/ReturnButton");
         _toolsButton = GetNode<Button>("VBox/PetWithMe/Container/Buttons/ToolsButton");
-
-        _spriteAnimator.SetPlaceholder(_petPlaceholder);
         _spriteAnimator.OnStateChanged += OnPetStateChanged;
 
         _sleepButton.Pressed += OnSleepPressed;

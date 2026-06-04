@@ -44,7 +44,18 @@ public partial class PetSpriteAnimator : Node
     public override void _Ready()
     {
         InitializePlaceholderColors();
+        GenerateAndRegisterSprites();
         StartStateCheckTimer();
+    }
+
+    private void GenerateAndRegisterSprites()
+    {
+        foreach (PetSpriteState state in Enum.GetValues(typeof(PetSpriteState)))
+        {
+            Texture2D texture = PetSpriteGenerator.GenerateSprite(state);
+            RegisterTexture(state, texture);
+        }
+        GD.Print("[PetSpriteAnimator] Generated and registered sprites for all states.");
     }
 
     public override void _Process(double delta)
