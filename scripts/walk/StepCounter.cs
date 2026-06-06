@@ -4,8 +4,9 @@ public partial class StepCounter : Node
 {
 [Signal] public delegate void OnStepDetectedEventHandler(int totalSteps);
 [Signal] public delegate void OnMilestoneStepEventHandler(int steps);
-private Timer _stepTimer;
-private int _stepsToday = 0;
+    private Timer _stepTimer;
+    private MilestoneManager _milestoneManager;
+    private int _stepsToday = 0;
 private float _lastMagnitude = 0f;
 private double _lastStepTime = 0;
 private const float Threshold = 10.0f;
@@ -13,16 +14,17 @@ private const float MinStepInterval = 0.35f;
 private const int PersistInterval = 100;
 private string _lastSaveDate = "";
 public int StepsToday => _stepsToday;
-public override void _Ready()
-{
-_stepTimer = new Timer();
-_stepTimer.WaitTime = 0.05f;
-_stepTimer.OneShot = false;
-_stepTimer.Timeout += OnStepCheck;
-AddChild(_stepTimer);
-LoadStepsToday();
-CheckAndResetIfNewDay();
-}
+    public override void _Ready()
+    {
+        _stepTimer = new Timer();
+        _stepTimer.WaitTime = 0.05f;
+        _stepTimer.OneShot = false;
+        _stepTimer.Timeout += OnStepCheck;
+        AddChild(_stepTimer);
+        _milestoneManager = GetNode<MilestoneManager>("/root/MilestoneManager");
+        LoadStepsToday();
+        CheckAndResetIfNewDay();
+    }
 public void StartCounting()
 {
 _stepTimer.Start();
@@ -51,8 +53,8 @@ if (_stepsToday % PersistInterval == 0)
 {
 SaveStepsToday();
 }
-int[] milestones = { 500, 1000, 2000, 3500, 5000 };
-foreach (int milestone in milestones)
+        var milestones = _milestoneManager.GetMilestoneSteps();
+        foreach (int milestone in milestones)
 {
 if (_stepsToday == milestone)
 {

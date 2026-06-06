@@ -13,8 +13,15 @@ public partial class FirestoreService : Node
 
     private System.Net.Http.HttpClient _httpClient;
     private bool _isConnected = false;
+    private string _lastKnownTransferId = "";
 
-    public void SetLastKnownTransferId(string transferId) { }
+    public void SetLastKnownTransferId(string transferId)
+    {
+        _lastKnownTransferId = transferId;
+        GD.Print("[FirestoreService] Last known transfer ID set: ", transferId);
+    }
+
+    public string GetLastKnownTransferId() => _lastKnownTransferId;
 
     public override void _Ready()
     {

@@ -6,20 +6,22 @@ private Label _stepsLabel;
 private Label _milestonesLabel;
 private Label _itemFoundLabel;
 private WalkTracker _walkTracker;
+private MilestoneManager _milestoneManager;
 private ItemFoundScene _itemFoundOverlay;
 public override void _Ready()
 {
-_stepsLabel = GetNode<Label>("VBox/StepsLabel");
-_milestonesLabel = GetNode<Label>("VBox/MilestonesLabel");
-_itemFoundLabel = GetNode<Label>("VBox/ItemFoundLabel");
-_itemFoundOverlay = GetNodeOrNull<ItemFoundScene>("ItemFoundOverlay");
-var endButton = GetNode<Button>("VBox/EndWalkButton");
-endButton.Pressed += OnEndWalkPressed;
-_walkTracker = GetNode<WalkTracker>("/root/WalkTracker");
-_walkTracker.OnWalkStarted += OnWalkStarted;
-_walkTracker.OnWalkEnded += OnWalkEnded;
-_walkTracker.OnItemFound += OnItemFound;
-_walkTracker.StartWalk();
+    _stepsLabel = GetNode<Label>("VBox/StepsLabel");
+    _milestonesLabel = GetNode<Label>("VBox/MilestonesLabel");
+    _itemFoundLabel = GetNode<Label>("VBox/ItemFoundLabel");
+    _itemFoundOverlay = GetNodeOrNull<ItemFoundScene>("ItemFoundOverlay");
+    var endButton = GetNode<Button>("VBox/EndWalkButton");
+    endButton.Pressed += OnEndWalkPressed;
+    _walkTracker = GetNode<WalkTracker>("/root/WalkTracker");
+    _milestoneManager = GetNode<MilestoneManager>("/root/MilestoneManager");
+    _walkTracker.OnWalkStarted += OnWalkStarted;
+    _walkTracker.OnWalkEnded += OnWalkEnded;
+    _walkTracker.OnItemFound += OnItemFound;
+    _walkTracker.StartWalk();
 }
 private void OnWalkStarted()
 {
@@ -60,8 +62,7 @@ public override void _Process(double delta)
 if (_walkTracker.IsWalking)
 {
 _stepsLabel.Text = "Passos: " + _walkTracker.CurrentSteps;
-var milestoneManager = GetNode<MilestoneManager>("/root/MilestoneManager");
-_milestonesLabel.Text = "Marcos: " + milestoneManager.MilestonesReachedToday;
+    _milestonesLabel.Text = "Marcos: " + _milestoneManager.MilestonesReachedToday;
 }
 }
 }

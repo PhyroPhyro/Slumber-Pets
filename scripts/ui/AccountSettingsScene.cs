@@ -147,9 +147,4 @@ public partial class AccountSettingsScene : Control
     {
         GetTree().ChangeSceneToFile(_previousScene);
     }
-
-    private void OnBackPressed()
-    {
-        GetTree().ChangeSceneToFile(_previousScene);
-    }
 }

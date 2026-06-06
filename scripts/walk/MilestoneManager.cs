@@ -7,8 +7,12 @@ public partial class MilestoneManager : Node
 private List<MilestoneData> _milestones = new();
 private HashSet<int> _reachedMilestones = new();
 private int _milestonesReachedToday = 0;
-public int MilestonesReachedToday => _milestonesReachedToday;
-public override void _Ready()
+    public int MilestonesReachedToday => _milestonesReachedToday;
+    public List<int> GetMilestoneSteps()
+    {
+        return _milestones.ConvertAll(m => m.Steps);
+    }
+    public override void _Ready()
 {
 LoadMilestones();
 GD.Print("[MilestoneManager] Loaded ", _milestones.Count, " milestones");
