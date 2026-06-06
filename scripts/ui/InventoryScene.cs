@@ -10,6 +10,7 @@ private InventoryManager _inventoryManager;
 private ShopManager _shopManager;
 private ResourceManager _resourceManager;
 private PetNeeds _petNeeds;
+private ItemEffectManager _effectManager;
 
 public override void _Ready()
 {
@@ -22,6 +23,7 @@ _inventoryManager = GetNode<InventoryManager>("/root/InventoryManager");
 _shopManager = GetNode<ShopManager>("/root/ShopManager");
 _resourceManager = GetNode<ResourceManager>("/root/ResourceManager");
 _petNeeds = GetNode<PetNeeds>("/root/PetNeeds");
+_effectManager = GetNode<ItemEffectManager>("/root/ItemEffectManager");
 
 _inventoryManager.OnInventoryChanged += RefreshItemList;
 _resourceManager.OnStarCoinsChanged += UpdateCoins;
@@ -64,6 +66,15 @@ AddItem(kvp.Key, kvp.Value);
         var hBox = new HBoxContainer();
         hBox.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 
+        if (shopItem?.Sprite != null)
+        {
+            var spriteRect = new TextureRect();
+            spriteRect.Texture = shopItem.Sprite;
+            spriteRect.CustomMinimumSize = new Vector2(24, 24);
+            spriteRect.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
+            hBox.AddChild(spriteRect);
+        }
+
         var nameLabel = new Label();
         nameLabel.Text = displayName;
         nameLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -84,6 +95,17 @@ AddItem(kvp.Key, kvp.Value);
             {
                 if (desc.Length > 0) desc += " | ";
                 desc += $"Fel+{shopItem.HappinessRestore}";
+            }
+            if (shopItem.EnergyRestore > 0)
+            {
+                if (desc.Length > 0) desc += " | ";
+                desc += $"E+{shopItem.EnergyRestore}";
+            }
+            if (shopItem.EffectType != "none")
+            {
+                if (desc.Length > 0) desc += " | ";
+                var effectType = ItemEffectManager.ParseEffectType(shopItem.EffectType);
+                desc += _effectManager.GetEffectDescription(effectType);
             }
         }
         var descLabel = new Label();
@@ -118,12 +140,24 @@ ShowFeedback("Sem itens no inventário!", new Color(1, 0.3f, 0.3f));
 return;
 }
 
-if (shopItem.HungerRestore > 0 || shopItem.HappinessRestore > 0)
+if (shopItem.HungerRestore > 0 || shopItem.HappinessRestore > 0 || shopItem.EnergyRestore > 0)
 {
-_petNeeds.Feed(shopItem.HungerRestore, shopItem.HappinessRestore);
+_petNeeds.Feed(shopItem.HungerRestore, shopItem.HappinessRestore, shopItem.EnergyRestore);
 }
 
-ShowFeedback($"Usou {shopItem.Name}!", new Color(0.3f, 1, 0.3f));
+if (shopItem.EffectType != "none" && shopItem.EffectDuration > 0)
+{
+var effectType = ItemEffectManager.ParseEffectType(shopItem.EffectType);
+_effectManager.ApplyEffect(effectType, shopItem.EffectValue, shopItem.EffectDuration, itemId);
+}
+
+string feedbackMsg = $"Usou {shopItem.Name}!";
+if (shopItem.EffectType != "none")
+{
+var effectType = ItemEffectManager.ParseEffectType(shopItem.EffectType);
+feedbackMsg += $" ({_effectManager.GetEffectDescription(effectType)})";
+}
+ShowFeedback(feedbackMsg, new Color(0.3f, 1, 0.3f));
 RefreshItemList();
 }
 

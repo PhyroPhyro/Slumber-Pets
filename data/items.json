@@ -7,6 +7,10 @@
       "type": "food",
       "hungerRestore": 20,
       "happinessRestore": 0,
+      "energyRestore": 0,
+      "effectType": "none",
+      "effectDuration": 0,
+      "effectValue": 0,
       "shopPrice": 10
     },
     {
@@ -16,6 +20,10 @@
       "type": "food",
       "hungerRestore": 35,
       "happinessRestore": 5,
+      "energyRestore": 0,
+      "effectType": "none",
+      "effectDuration": 0,
+      "effectValue": 0,
       "shopPrice": 30
     },
     {
@@ -25,6 +33,10 @@
       "type": "food",
       "hungerRestore": 50,
       "happinessRestore": 15,
+      "energyRestore": 0,
+      "effectType": "none",
+      "effectDuration": 0,
+      "effectValue": 0,
       "shopPrice": 60
     },
     {
@@ -34,6 +46,10 @@
       "type": "food",
       "hungerRestore": 80,
       "happinessRestore": 25,
+      "energyRestore": 0,
+      "effectType": "none",
+      "effectDuration": 0,
+      "effectValue": 0,
       "shopPrice": 120
     },
     {
@@ -43,6 +59,10 @@
       "type": "toy",
       "hungerRestore": 0,
       "happinessRestore": 15,
+      "energyRestore": 0,
+      "effectType": "none",
+      "effectDuration": 0,
+      "effectValue": 0,
       "shopPrice": 20
     },
     {
@@ -52,6 +72,10 @@
       "type": "toy",
       "hungerRestore": 0,
       "happinessRestore": 30,
+      "energyRestore": 0,
+      "effectType": "none",
+      "effectDuration": 0,
+      "effectValue": 0,
       "shopPrice": 80
     },
     {
@@ -61,7 +85,128 @@
       "type": "exclusive",
       "hungerRestore": 0,
       "happinessRestore": 50,
+      "energyRestore": 0,
+      "effectType": "none",
+      "effectDuration": 0,
+      "effectValue": 0,
       "shopPrice": -1
+    },
+    {
+      "id": "energy_drink",
+      "name": "Bebida Energética",
+      "rarity": "common+",
+      "type": "drink",
+      "hungerRestore": 5,
+      "happinessRestore": 5,
+      "energyRestore": 40,
+      "effectType": "none",
+      "effectDuration": 0,
+      "effectValue": 0,
+      "shopPrice": 25
+    },
+    {
+      "id": "energy_elixir",
+      "name": "Elixir de Energia",
+      "rarity": "uncommon",
+      "type": "drink",
+      "hungerRestore": 10,
+      "happinessRestore": 10,
+      "energyRestore": 70,
+      "effectType": "none",
+      "effectDuration": 0,
+      "effectValue": 0,
+      "shopPrice": 75
+    },
+    {
+      "id": "shield_potion",
+      "name": "Poção Escudo",
+      "rarity": "rare",
+      "type": "potion",
+      "hungerRestore": 0,
+      "happinessRestore": 0,
+      "energyRestore": 0,
+      "effectType": "decay_shield",
+      "effectDuration": 120,
+      "effectValue": 50,
+      "shopPrice": 150
+    },
+    {
+      "id": "luck_charm",
+      "name": "Amuleto da Sorte",
+      "rarity": "uncommon",
+      "type": "charm",
+      "hungerRestore": 0,
+      "happinessRestore": 10,
+      "energyRestore": 0,
+      "effectType": "luck_boost",
+      "effectDuration": 180,
+      "effectValue": 25,
+      "shopPrice": 90
+    },
+    {
+      "id": "time_crystal",
+      "name": "Cristal do Tempo",
+      "rarity": "rare+",
+      "type": "crystal",
+      "hungerRestore": 0,
+      "happinessRestore": 0,
+      "energyRestore": 0,
+      "effectType": "income_boost",
+      "effectDuration": 300,
+      "effectValue": 200,
+      "shopPrice": 250
+    },
+    {
+      "id": "mega_treat",
+      "name": "Guloseima Mega",
+      "rarity": "rare",
+      "type": "treat",
+      "hungerRestore": 60,
+      "happinessRestore": 60,
+      "energyRestore": 30,
+      "effectType": "none",
+      "effectDuration": 0,
+      "effectValue": 0,
+      "shopPrice": 180
+    },
+    {
+      "id": "combo_star",
+      "name": "Estrela Combo",
+      "rarity": "uncommon",
+      "type": "charm",
+      "hungerRestore": 0,
+      "happinessRestore": 0,
+      "energyRestore": 0,
+      "effectType": "play_boost",
+      "effectDuration": 90,
+      "effectValue": 50,
+      "shopPrice": 100
+    },
+    {
+      "id": "sleep_totem",
+      "name": "Totem do Sono",
+      "rarity": "rare",
+      "type": "totem",
+      "hungerRestore": 0,
+      "happinessRestore": 0,
+      "energyRestore": 0,
+      "effectType": "sleep_boost",
+      "effectDuration": 0,
+      "effectValue": 40,
+      "shopPrice": 130
+    },
+    {
+      "id": "walk_boots",
+      "name": "Botas de Caminhada",
+      "rarity": "uncommon",
+      "type": "equipment",
+      "hungerRestore": 0,
+      "happinessRestore": 0,
+      "energyRestore": 0,
+      "effectType": "walk_boost",
+      "effectDuration": 240,
+      "effectValue": 30,
+      "shopPrice": 110
     }
   ]
 }

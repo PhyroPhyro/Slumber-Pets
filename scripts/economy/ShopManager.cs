@@ -31,16 +31,21 @@ foreach (var item in data.Items)
 {
 if (item.ShopPrice > 0)
 {
-_shopItems.Add(new ShopItem
-{
-Id = item.Id,
-Name = item.Name,
-Rarity = item.Rarity,
-Type = item.Type,
-Price = item.ShopPrice,
-HungerRestore = item.HungerRestore,
-HappinessRestore = item.HappinessRestore
-});
+                _shopItems.Add(new ShopItem
+                {
+                    Id = item.Id,
+                    Name = item.Name,
+                    Rarity = item.Rarity,
+                    Type = item.Type,
+                    Price = item.ShopPrice,
+                    HungerRestore = item.HungerRestore,
+                    HappinessRestore = item.HappinessRestore,
+                    EnergyRestore = item.EnergyRestore,
+                    EffectType = item.EffectType,
+                    EffectDuration = item.EffectDuration,
+                    EffectValue = item.EffectValue,
+                    Sprite = ItemSpriteGenerator.GenerateSprite(item.Id, item.Type, item.Rarity)
+                });
 }
 }
 }
@@ -81,13 +86,18 @@ return _shopItems.Find(i => i.Id == itemId);
 }
 public class ShopItem
 {
-public string Id { get; set; } = string.Empty;
-public string Name { get; set; } = string.Empty;
-public string Rarity { get; set; } = string.Empty;
-public string Type { get; set; } = string.Empty;
-public int Price { get; set; } = 0;
-public int HungerRestore { get; set; } = 0;
-public int HappinessRestore { get; set; } = 0;
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Rarity { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public int Price { get; set; } = 0;
+    public int HungerRestore { get; set; } = 0;
+    public int HappinessRestore { get; set; } = 0;
+    public int EnergyRestore { get; set; } = 0;
+    public string EffectType { get; set; } = "none";
+    public int EffectDuration { get; set; } = 0;
+    public int EffectValue { get; set; } = 0;
+    public Texture2D Sprite { get; set; }
 }
 public class ItemsData
 {
@@ -108,6 +118,14 @@ public class ItemEntry
     public int HungerRestore { get; set; } = 0;
     [System.Text.Json.Serialization.JsonPropertyName("happinessRestore")]
     public int HappinessRestore { get; set; } = 0;
+    [System.Text.Json.Serialization.JsonPropertyName("energyRestore")]
+    public int EnergyRestore { get; set; } = 0;
+    [System.Text.Json.Serialization.JsonPropertyName("effectType")]
+    public string EffectType { get; set; } = "none";
+    [System.Text.Json.Serialization.JsonPropertyName("effectDuration")]
+    public int EffectDuration { get; set; } = 0;
+    [System.Text.Json.Serialization.JsonPropertyName("effectValue")]
+    public int EffectValue { get; set; } = 0;
     [System.Text.Json.Serialization.JsonPropertyName("shopPrice")]
     public int ShopPrice { get; set; } = 0;
 }
