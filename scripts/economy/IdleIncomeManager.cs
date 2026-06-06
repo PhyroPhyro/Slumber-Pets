@@ -57,8 +57,8 @@ PetState petState = gameManager.GetPetState();
 float baseRate = CalculateBaseRate(petState.Energy);
 float happinessBonus = petState.Happiness >= _balanceConfig.HappinessThreshold ? _balanceConfig.HappinessBonus : 0f;
 float hungerPenalty = petState.Hunger <= _balanceConfig.HungerThreshold ? _balanceConfig.HungerPenalty : 0f;
-_coinsPerMinute = baseRate + happinessBonus - hungerPenalty;
-_coinsPerMinute = Mathf.Max(_coinsPerMinute, 0f);
+    _coinsPerMinute = (baseRate + happinessBonus - hungerPenalty) * GetIncomeMultiplier();
+    _coinsPerMinute = Mathf.Max(_coinsPerMinute, 0f);
 int coinsToAward = Mathf.RoundToInt(_coinsPerMinute * (_balanceConfig.TickIntervalSeconds / 60f));
 if (coinsToAward > 0)
 {
@@ -74,9 +74,14 @@ if (energy >= _balanceConfig.EnergyThresholds.High)
 return _balanceConfig.BaseIncomeRates.EnergyHigh;
 if (energy >= _balanceConfig.EnergyThresholds.Medium)
 return _balanceConfig.BaseIncomeRates.EnergyMedium;
-return _balanceConfig.BaseIncomeRates.EnergyLow;
-}
-public void ResetSession()
+    return _balanceConfig.BaseIncomeRates.EnergyLow;
+    }
+    private float GetIncomeMultiplier()
+    {
+        var effectManager = GetNode<ItemEffectManager>("/root/ItemEffectManager");
+        return effectManager.GetIncomeMultiplier();
+    }
+    public void ResetSession()
 {
 _sessionTotalCoins = 0;
 }

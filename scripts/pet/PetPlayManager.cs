@@ -118,7 +118,7 @@ public partial class PetPlayManager : Node
     private void EndSession()
     {
         _isPlaying = false;
-        float happinessGained = _score * HappinessPerPoint;
+        float happinessGained = _score * HappinessPerPoint * GetPlayHappinessMultiplier();
         int finalScore = _score;
 
         var petNeeds = GetNode<PetNeeds>("/root/PetNeeds");
@@ -148,5 +148,11 @@ public partial class PetPlayManager : Node
     public string GetHitQualityText(bool isPerfect)
     {
         return isPerfect ? "PERFEITO!" : "BOM!";
+    }
+
+    private float GetPlayHappinessMultiplier()
+    {
+        var effectManager = GetNode<ItemEffectManager>("/root/ItemEffectManager");
+        return effectManager.GetPlayHappinessMultiplier();
     }
 }

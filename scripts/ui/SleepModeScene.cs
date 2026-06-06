@@ -46,18 +46,20 @@ gameManager.SaveGame();
 GD.Print("[SleepModeScene] Sleep report saved. Coins earned: ", report.CoinsEarned);
 GetTree().ChangeSceneToFile("res://scenes/main_mobile.tscn");
 }
-private string RollRareItem(string tier)
-{
-float rareChance = tier switch
-{
-"Excellent" => 100f,
-"Good" => 50f,
-"Regular" => 20f,
-_ => 5f
-};
-var rng = new RandomNumberGenerator();
-rng.Randomize();
-if (rng.RandiRange(1, 100) > rareChance) return null;
+    private string RollRareItem(string tier)
+    {
+        float rareChance = tier switch
+        {
+            "Excellent" => 100f,
+            "Good" => 50f,
+            "Regular" => 20f,
+            _ => 5f
+        };
+        rareChance *= GetLuckMultiplier();
+        rareChance = Mathf.Min(rareChance, 100f);
+        var rng = new RandomNumberGenerator();
+        rng.Randomize();
+        if (rng.RandiRange(1, 100) > rareChance) return null;
 var itemRoller = GetNode<ItemRoller>("/root/ItemRoller");
 var rareItems = GetRareItems();
 if (rareItems.Count == 0) return null;
@@ -93,8 +95,14 @@ _timerLabel.Text = elapsed.ToString(@"hh\:mm\:ss");
 _movementLabel.Text = "Movimentos: " + _sleepTracker.GetMovementCount();
 }
 }
-private void OnWakePressed()
-{
-_sleepTracker.EndSleep();
-}
+    private void OnWakePressed()
+    {
+        _sleepTracker.EndSleep();
+    }
+
+    private float GetLuckMultiplier()
+    {
+        var effectManager = GetNode<ItemEffectManager>("/root/ItemEffectManager");
+        return effectManager.GetLuckMultiplier();
+    }
 }

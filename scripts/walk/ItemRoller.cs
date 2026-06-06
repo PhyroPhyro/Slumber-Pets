@@ -44,7 +44,7 @@ if (eligibleItems.Count == 0)
 {
 eligibleItems = _itemsByRarity.FindAll(i => i.Rarity == "common");
 }
-bool rolledRare = _rng.RandiRange(1, 100) <= rareChance;
+    bool rolledRare = _rng.RandiRange(1, 100) <= GetRareChanceWithLuck(rareChance);
 if (rolledRare)
 {
 var rareItems = _itemsByRarity.FindAll(i => i.Rarity == "rare+" || i.Rarity == "rare");
@@ -81,13 +81,20 @@ return index switch
 _ => 90
 };
 }
-private bool IsLowerRarity(string itemRarity, string targetRarity)
-{
-var order = new[] { "common", "common+", "uncommon", "uncommon+", "rare", "rare+" };
-int itemIdx = Array.IndexOf(order, itemRarity);
-int targetIdx = Array.IndexOf(order, targetRarity);
-return itemIdx >= 0 && targetIdx >= 0 && itemIdx < targetIdx;
-}
+    private bool IsLowerRarity(string itemRarity, string targetRarity)
+    {
+        var order = new[] { "common", "common+", "uncommon", "uncommon+", "rare", "rare+" };
+        int itemIdx = Array.IndexOf(order, itemRarity);
+        int targetIdx = Array.IndexOf(order, targetRarity);
+        return itemIdx >= 0 && targetIdx >= 0 && itemIdx < targetIdx;
+    }
+
+    private int GetRareChanceWithLuck(int baseChance)
+    {
+        var effectManager = GetNode<ItemEffectManager>("/root/ItemEffectManager");
+        float multiplier = effectManager.GetLuckMultiplier();
+        return Mathf.Min(Mathf.RoundToInt(baseChance * multiplier), 100);
+    }
 }
 public class ItemDrop
 {

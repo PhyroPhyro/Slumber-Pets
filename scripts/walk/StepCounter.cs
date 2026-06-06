@@ -7,6 +7,7 @@ public partial class StepCounter : Node
     private Timer _stepTimer;
     private MilestoneManager _milestoneManager;
     private int _stepsToday = 0;
+    private float _stepAccumulator = 0f;
 private float _lastMagnitude = 0f;
 private double _lastStepTime = 0;
 private const float Threshold = 10.0f;
@@ -44,11 +45,15 @@ float magnitude = accel.Length();
 double currentTime = Time.GetTicksMsec() / 1000.0;
 bool isAboveThreshold = magnitude > Threshold;
 bool isEnoughTimePassed = (currentTime - _lastStepTime) > MinStepInterval;
-if (isAboveThreshold && isEnoughTimePassed)
-{
-_stepsToday++;
-_lastStepTime = currentTime;
-EmitSignal(SignalName.OnStepDetected, _stepsToday);
+    if (isAboveThreshold && isEnoughTimePassed)
+    {
+        float stepMultiplier = GetWalkStepMultiplier();
+        _stepAccumulator += stepMultiplier;
+        int stepsToAdd = Mathf.FloorToInt(_stepAccumulator);
+        _stepAccumulator -= stepsToAdd;
+        _stepsToday += stepsToAdd;
+        _lastStepTime = currentTime;
+        EmitSignal(SignalName.OnStepDetected, _stepsToday);
 if (_stepsToday % PersistInterval == 0)
 {
 SaveStepsToday();
@@ -93,15 +98,22 @@ else
 _lastSaveDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
 }
 }
-private void CheckAndResetIfNewDay()
-{
-string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
-if (_lastSaveDate != today)
-{
-GD.Print("[StepCounter] New day detected, resetting steps. Last: ", _lastSaveDate, " Today: ", today);
-_stepsToday = 0;
-_lastSaveDate = today;
-SaveStepsToday();
-}
-}
+    private void CheckAndResetIfNewDay()
+    {
+        string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        if (_lastSaveDate != today)
+        {
+            GD.Print("[StepCounter] New day detected, resetting steps. Last: ", _lastSaveDate, " Today: ", today);
+            _stepsToday = 0;
+            _stepAccumulator = 0f;
+            _lastSaveDate = today;
+            SaveStepsToday();
+        }
+    }
+
+    private float GetWalkStepMultiplier()
+    {
+        var effectManager = GetNode<ItemEffectManager>("/root/ItemEffectManager");
+        return effectManager.GetWalkStepMultiplier();
+    }
 }

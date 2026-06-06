@@ -37,13 +37,15 @@ int durationMin = (int)(endTime - _sleepStartTime).TotalMinutes;
 float movementsPerHour = durationMin > 0 ? (_movementCount / (durationMin / 60f)) : 0;
 SleepQuality quality = CalculateQuality(durationMin, movementsPerHour);
 int score = CalculateScore(durationMin, movementsPerHour);
-int coinsEarned = CalculateCoins(durationMin, quality);
-string tier = GetTier(quality);
-bool midnightBonus = ApplyMidnightBonus();
-float consistencyBonus = CalculateConsistencyBonus();
-int totalCoins = coinsEarned;
-if (midnightBonus) totalCoins = (int)(totalCoins * 1.2f);
-if (consistencyBonus > 0f) totalCoins = (int)(totalCoins * (1f + consistencyBonus));
+    int coinsEarned = CalculateCoins(durationMin, quality);
+    string tier = GetTier(quality);
+    bool midnightBonus = ApplyMidnightBonus();
+    float consistencyBonus = CalculateConsistencyBonus();
+    float sleepBoost = GetSleepQualityMultiplier();
+    int totalCoins = coinsEarned;
+    if (midnightBonus) totalCoins = (int)(totalCoins * 1.2f);
+    if (consistencyBonus > 0f) totalCoins = (int)(totalCoins * (1f + consistencyBonus));
+    if (sleepBoost > 1f) totalCoins = (int)(totalCoins * sleepBoost);
     var report = new SleepReportData
     {
         Date = _sleepStartTime.ToString("yyyy-MM-ddTHH:mm:ss"),
@@ -142,8 +144,14 @@ float stdDev = Mathf.Sqrt(variance);
 if (stdDev < 1.5f) return 0.15f;
 return 0f;
 }
-public int GetMovementCount() => _movementCount;
-public TimeSpan GetElapsedSleepTime() => _isSleeping ? DateTime.UtcNow - _sleepStartTime : TimeSpan.Zero;
+    public int GetMovementCount() => _movementCount;
+    public TimeSpan GetElapsedSleepTime() => _isSleeping ? DateTime.UtcNow - _sleepStartTime : TimeSpan.Zero;
+
+    private float GetSleepQualityMultiplier()
+    {
+        var effectManager = GetNode<ItemEffectManager>("/root/ItemEffectManager");
+        return effectManager.GetSleepQualityMultiplier();
+    }
 }
 public enum SleepQuality
 {
